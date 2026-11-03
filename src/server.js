@@ -24,12 +24,16 @@ export function createServer(cfg = loadConfig(), inject = {}) {
   // Seller token gate. Buyer-facing routes stay open: pay links (/p, /pay), the test checkout,
   // signed webhooks and the Woo paid ping (which has its own secret).
   const PUBLIC_API = [/^\/api\/woo\/paid$/, /^\/api\/mock\/(order|pay)\//];
+  // Constant-time compare of two secrets of any length (hashing first makes the lengths equal).
+  const sameSecret = (got, want) => {
+    if (!got || !want) return false;
+    const a = crypto.createHash('sha256').update(String(got)).digest();
+    const b = crypto.createHash('sha256').update(String(want)).digest();
+    return crypto.timingSafeEqual(a, b);
+  };
   http.use((req, res, next) => {
     if (!cfg.adminToken || !req.path.startsWith('/api/') || PUBLIC_API.some((r) => r.test(req.path))) return next();
-    const got = String(req.get('x-livelot-token') || req.query.token || '');
-    const a = crypto.createHash('sha256').update(got).digest();
-    const b = crypto.createHash('sha256').update(cfg.adminToken).digest();
-    if (got && crypto.timingSafeEqual(a, b)) return next();
+    if (sameSecret(req.get('x-livelot-token') || req.query.token, cfg.adminToken)) return next();
     res.status(401).json({ ok: false, error: 'Seller token required', auth: true });
   });
 
@@ -46,8 +50,9 @@ export function createServer(cfg = loadConfig(), inject = {}) {
   // Raw bodies first (webhooks need the exact bytes for HMAC, frames/audio are binary).
   http.post('/webhooks/meta', express.raw({ type: '*/*', limit: '2mb' }), (req, res) => {
     const raw = req.body instanceof Buffer ? req.body : Buffer.from('');
-    if (cfg.meta.appSecret && !verifySignature(raw, req.get('x-hub-signature-256'), cfg.meta.appSecret)) {
-      app.log('warn', 'Meta webhook: bad signature');
+    // Fail closed: without the App secret we can't tell Meta from anyone else, so nothing gets in.
+    if (!verifySignature(raw, req.get('x-hub-signature-256'), cfg.meta.appSecret)) {
+      app.log('warn', cfg.meta.appSecret ? 'Meta webhook: bad signature' : 'Meta webhook ignored: add the App secret in Settings');
       return res.sendStatus(401);
     }
     res.sendStatus(200);
@@ -59,14 +64,15 @@ export function createServer(cfg = loadConfig(), inject = {}) {
   });
   http.post('/webhooks/woo', express.raw({ type: '*/*', limit: '2mb' }), (req, res) => {
     const raw = req.body instanceof Buffer ? req.body : Buffer.from('');
-    const sig = req.get('x-wc-webhook-signature');
-    if (cfg.woo.webhookSecret) {
-      const want = crypto.createHmac('sha256', cfg.woo.webhookSecret).update(raw).digest('base64');
-      if (!sig || sig.length !== want.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(want))) return res.sendStatus(401);
-    }
+    // Optional path (the mu-plugin ping and the order poll already catch payments). Fail closed:
+    // with no WOO_WEBHOOK_SECRET it's off, since an unsigned "order 12 is paid" could come from anyone.
+    if (!cfg.woo.webhookSecret) return res.sendStatus(404);
+    const want = crypto.createHmac('sha256', cfg.woo.webhookSecret).update(raw).digest('base64');
+    if (!sameSecret(req.get('x-wc-webhook-signature'), want)) return res.sendStatus(401);
     res.sendStatus(200);
     try {
       const o = JSON.parse(raw.toString('utf8'));
+      // Same statuses as the poller: offline methods (the store's "Test payment") leave a paid order on-hold.
       if (['processing', 'completed', 'on-hold'].includes(o.status)) claims.markOrderPaid(String(o.id), { source: 'woo webhook' });
     } catch { /* Woo sends a non-JSON ping when the webhook is created */ }
   });
@@ -253,8 +259,14 @@ export function createServer(cfg = loadConfig(), inject = {}) {
 
   // ---- payments
   http.post('/api/woo/paid', wrap(async (req) => {
-    const secret = req.get('x-livelot-secret') || req.body?.secret;
-    if (secret !== cfg.woo.pingSecret) { const e = new Error('bad secret'); e.status = 401; throw e; }
+    // On a public server (seller token set) the example secret "change-me" is refused, so a copy of
+    // this repo deployed without its own secret can't have orders marked paid by strangers.
+    const want = cfg.woo.pingSecret;
+    const usable = want && !(cfg.adminToken && want === 'change-me');
+    if (!usable || !sameSecret(req.get('x-livelot-secret') || req.body?.secret, want)) {
+      if (!usable) app.log('warn', 'Paid ping refused: set your own payment notice secret (LIVELOT_PING_SECRET) in Settings → Shop');
+      const e = new Error('bad secret'); e.status = 401; throw e;
+    }
     const o = claims.markOrderPaid(String(req.body.order_id), { source: 'woo ping' });
     return { matched: Boolean(o) };
   }));

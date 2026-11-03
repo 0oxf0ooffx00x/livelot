@@ -33,6 +33,28 @@ test('seller token gates seller routes but not buyer routes', async () => {
   }
 });
 
+test('webhooks and the paid ping fail closed without their secrets', async () => {
+  const { base, close } = await boot({ adminToken: 'tok-123' });
+  const post = (path, body, headers = {}) => fetch(`${base}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
+  try {
+    // no App secret: unsigned Meta webhooks are refused
+    assert.equal((await post('/webhooks/meta', { object: 'page', entry: [] })).status, 401);
+    // no Woo webhook secret: the route is off
+    assert.equal((await post('/webhooks/woo', { id: 1, status: 'processing' })).status, 404);
+    // the example ping secret is refused on a public server, even when sent correctly
+    assert.equal((await post('/api/woo/paid', { order_id: 1, secret: 'change-me' })).status, 401);
+  } finally {
+    await close();
+  }
+  const signed = await boot({ adminToken: 'tok-123', woo: { ...loadConfig().woo, pingSecret: 'a-long-real-secret', webhookSecret: 'whsec' } });
+  try {
+    assert.equal((await fetch(`${signed.base}/api/woo/paid`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-livelot-secret': 'a-long-real-secret' }, body: '{"order_id":1}' })).status, 200);
+    assert.equal((await fetch(`${signed.base}/webhooks/woo`, { method: 'POST', headers: { 'x-wc-webhook-signature': 'forged' }, body: '{"id":1,"status":"processing"}' })).status, 401);
+  } finally {
+    await signed.close();
+  }
+});
+
 test('no token configured means open (local dev)', async () => {
   const { base, close } = await boot({ adminToken: '' });
   try {

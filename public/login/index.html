@@ -37,7 +37,8 @@
       const r = await fetch('/api/state', { headers: { 'x-livelot-token': t } });
       if (r.status === 401) { document.getElementById('err').textContent = 'That token is not right for this server.'; return; }
       try { localStorage.setItem('livelot-token', t); } catch {}
-      location.href = next.startsWith('/') ? next : '/dashboard/';
+      // Same-site paths only: "//evil.example" or "/\evil.example" would leave the site.
+      location.href = /^\/(?![\/\\])/.test(next) ? next : '/dashboard/';
     });
   </script>
 </body>
