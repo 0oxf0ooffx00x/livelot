@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LiveLot Settings</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared/tokens.css" />
+  <link rel="stylesheet" href="/shared/art.css" />
+  <link rel="stylesheet" href="/dashboard/dashboard.css" />
+  <link rel="stylesheet" href="/settings/settings.css" />
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/dashboard/" aria-label="LiveLot home">
+      <svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true"><path d="M3 6h17l9 10-9 10H3z" fill="var(--manila)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><circle cx="20" cy="16" r="2.6" fill="var(--ink)"/></svg>
+      <span>LiveLot</span>
+    </a>
+    <div class="actions" style="margin-left:auto"><a class="bb small primary" href="/dashboard/"><span>Back to selling</span></a></div>
+  </header>
+
+  <main class="settings">
+    <h1>Settings</h1>
+    <p class="lede">Connect your shop, your Facebook Page and Meta AI, and set how selling works. Changes work straight away and are kept for next time.</p>
+    <nav class="jump" id="jump" aria-label="Settings sections"></nav>
+    <p class="selling-note" id="sellingNote" hidden>You’re selling right now. Selling rules and Meta AI can change any time; the shop, Facebook and web address can only change after you press <b>Stop selling</b>.</p>
+    <div id="sections"></div>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/settings/settings.js"></script>
+</body>
+</html>

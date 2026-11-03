@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LiveLot Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared/tokens.css" />
+  <link rel="stylesheet" href="/shared/art.css" />
+  <style>
+    body { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+    form { width: 100%; max-width: 440px; background: var(--panel); border: 1px solid var(--line); border-radius: 28px; padding: 30px; display: grid; gap: 16px; justify-items: stretch; font-size: 17px; }
+    form .art { justify-self: center; }
+    h1 { margin: 0; font-size: 38px; font-weight: 900; font-stretch: 68%; text-align: center; }
+    p { margin: 0; color: var(--ink-2); text-align: center; }
+    input { border: 2px solid var(--line); border-radius: 14px; padding: 14px 16px; background: var(--panel); font-size: 18px; }
+    button { border: 0; border-radius: 18px; min-height: 64px; padding: 12px; background: var(--ink); color: var(--panel); font-weight: 850; font-stretch: 80%; font-size: 21px; cursor: pointer; }
+    .err { color: var(--stamp); min-height: 1.2em; font-size: 15px; text-align: center; }
+  </style>
+</head>
+<body>
+  <form id="f">
+    <span class="art xxl" style="--art:url(/art/signin.webp)" aria-hidden="true"></span>
+    <h1>Seller sign in</h1>
+    <p>Enter the seller token (ADMIN_TOKEN) for this LiveLot server.</p>
+    <input name="t" type="password" autocomplete="current-password" aria-label="Seller token" required autofocus />
+    <button type="submit">Open the control room</button>
+    <span class="err" id="err" role="alert"></span>
+  </form>
+  <script>
+    const next = new URLSearchParams(location.search).get('next') || '/dashboard/';
+    document.getElementById('f').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const t = e.target.t.value.trim();
+      const r = await fetch('/api/state', { headers: { 'x-livelot-token': t } });
+      if (r.status === 401) { document.getElementById('err').textContent = 'That token is not right for this server.'; return; }
+      try { localStorage.setItem('livelot-token', t); } catch {}
+      location.href = next.startsWith('/') ? next : '/dashboard/';
+    });
+  </script>
+</body>
+</html>

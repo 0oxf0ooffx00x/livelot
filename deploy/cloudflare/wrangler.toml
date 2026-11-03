@@ -1,0 +1,8 @@
+name = "livelot-proxy"
+main = "proxy-worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = false
+routes = [{ pattern = "livelot.stream", custom_domain = true }]
+
+[vars]
+ORIGIN = "https://livelot-374662230485.europe-west2.run.app"

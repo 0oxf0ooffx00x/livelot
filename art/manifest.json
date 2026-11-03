@@ -1,0 +1,388 @@
+{
+  "style": "Make one square image (1:1). Style: a tactile paper-craft 3D icon, as if built by hand from thick matte card and kraft paper for a market stall. Soft rounded edges, visible layered paper edges, very fine paper grain, soft even light from the top left, gentle shading, no glossy highlights. Use only these colours: manila yellow #E9C46A, ink navy #1C2547, stamp red #C7322B, cash green #23764A, cream #F7F0DC, pale blue-grey #C9D1DF. One subject (or a tight little group), three-quarter view, centred, filling about 80% of the square, nothing cut off at the edges. No words, letters, numbers or logos. No floor, no cast shadow, no scene behind it.",
+  "backgroundChatGPT": "Transparent background.",
+  "backgroundGemini": "Plain solid pure white background.",
+  "groups": [
+    {
+      "id": 1,
+      "title": "Style test",
+      "note": "Make these 3 first. If you like how they look together, carry on. If not, tell me and we adjust the style before making the rest."
+    },
+    {
+      "id": 2,
+      "title": "Core",
+      "note": "The images people see most: the start screen, the selling steps, the main buttons and the AI."
+    },
+    {
+      "id": 3,
+      "title": "Finishing",
+      "note": "Empty screens, menus, buyer checkout and sign in."
+    }
+  ],
+  "images": [
+    {
+      "name": "home-posts",
+      "group": 1,
+      "title": "Sell with posts",
+      "use": "Big card on the start screen",
+      "subject": "A smartphone standing upright showing a photo post of a folded knitted jumper. A manila price tag on a string hangs from the corner of the phone, and a small cream speech bubble pops out beside it."
+    },
+    {
+      "name": "btn-camera",
+      "group": 1,
+      "title": "Use camera",
+      "use": "Camera button, and the camera panel when the camera is off",
+      "subject": "A small round webcam on a little stand, lens facing us, with a tiny cash-green light glowing on top."
+    },
+    {
+      "name": "paid",
+      "group": 1,
+      "title": "Paid",
+      "use": "\"Get paid\" step, paid buyers, money totals",
+      "subject": "A small stack of manila coins and a folded cash-green banknote, with a round cash-green badge holding a cream tick mark."
+    },
+    {
+      "name": "home-live",
+      "group": 2,
+      "title": "Go live",
+      "use": "Big card on the start screen",
+      "subject": "A smartphone on a small tripod, filming, with a glowing stamp-red recording dot on top and a manila price tag on a string hanging from the tripod."
+    },
+    {
+      "name": "home-demo",
+      "group": 2,
+      "title": "Watch a demo show",
+      "use": "Card on the start screen",
+      "subject": "A tiny paper theatre stage with ink-navy curtains pulled open, and a manila price tag hanging in a soft spotlight in the middle of the stage."
+    },
+    {
+      "name": "step-add",
+      "group": 2,
+      "title": "Add an item",
+      "use": "Step 1, and \"hold it up to the camera\" moments",
+      "subject": "Two cream paper hands holding up a folded manila jumper, framed by four ink-navy camera viewfinder corner brackets."
+    },
+    {
+      "name": "step-publish",
+      "group": 2,
+      "title": "Check and publish",
+      "use": "Step 2, and the big Publish button",
+      "subject": "A manila price tag with a big cash-green tick on it, flying forward with three short motion lines behind it."
+    },
+    {
+      "name": "step-sold",
+      "group": 2,
+      "title": "Wait for \"sold\"",
+      "use": "Step 3, items sold total",
+      "subject": "A cream speech bubble with a stamp-red rubber stamp pressing down onto it, as if stamping it."
+    },
+    {
+      "name": "btn-new-item",
+      "group": 2,
+      "title": "New item",
+      "use": "The New item button",
+      "subject": "A wooden clothes hanger with a fresh manila price tag hanging from it, and a chunky manila plus sign beside it."
+    },
+    {
+      "name": "btn-photo",
+      "group": 2,
+      "title": "Upload a photo",
+      "use": "Upload a photo button",
+      "subject": "A cream instant-camera photo print showing a simple trainer shoe, with a curved ink-navy arrow rising up out of it."
+    },
+    {
+      "name": "btn-look",
+      "group": 2,
+      "title": "Look again",
+      "use": "Look again button",
+      "subject": "A magnifying glass with a manila handle, an ink-navy rim and a pale blue-grey glass lens."
+    },
+    {
+      "name": "ai-spark",
+      "group": 2,
+      "title": "Muse Spark looks",
+      "use": "AI step: Muse Spark looks at the camera",
+      "subject": "A friendly paper eye with an ink-navy iris and a small manila sparkle star at its corner."
+    },
+    {
+      "name": "ai-sam",
+      "group": 2,
+      "title": "SAM 3.1 cuts it out",
+      "use": "AI step: SAM 3.1 cuts the item out of the picture",
+      "subject": "A pair of ink-navy scissors cutting along a dashed outline around a manila jumper shape on a cream card."
+    },
+    {
+      "name": "ai-voice",
+      "group": 2,
+      "title": "Muse Voice listens",
+      "use": "AI step: Muse Voice hears what you say",
+      "subject": "A retro ink-navy microphone with three curved manila sound-wave strips coming from it."
+    },
+    {
+      "name": "ai-image",
+      "group": 2,
+      "title": "Muse Image cleans the photo",
+      "use": "AI step: Muse Image makes a clean product photo",
+      "subject": "A small photo-studio softbox light shining onto a cream picture frame, with a manila sparkle in the frame's corner."
+    },
+    {
+      "name": "ai-write",
+      "group": 2,
+      "title": "Muse Spark writes the listing",
+      "use": "AI step: the listing is written; also the Describe button",
+      "subject": "A pencil with a manila body and stamp-red eraser writing on a cream price tag."
+    },
+    {
+      "name": "ai-read",
+      "group": 2,
+      "title": "Muse Spark reads comments",
+      "use": "Comments panel: which comments are buyers",
+      "subject": "Three small cream speech bubbles dropping into an ink-navy funnel, with one coming out of the bottom wearing a cash-green tick."
+    },
+    {
+      "name": "state-needs-you",
+      "group": 2,
+      "title": "Needs you",
+      "use": "Comments LiveLot isn't sure about",
+      "subject": "A cream paper hand raised up high, with a small manila question-mark bubble beside it."
+    },
+    {
+      "name": "state-link-sent",
+      "group": 2,
+      "title": "Pay link sent",
+      "use": "Buyers who got their pay link",
+      "subject": "A cream envelope flying forward, with a manila price tag tied to it and two short motion lines behind it."
+    },
+    {
+      "name": "state-waitlist",
+      "group": 2,
+      "title": "Waiting in line",
+      "use": "Buyers on the waitlist",
+      "subject": "A stamp-red paper queue ticket curling out of a small ink-navy ticket dispenser."
+    },
+    {
+      "name": "empty-item",
+      "group": 2,
+      "title": "No item yet",
+      "use": "Item panel and \"Your items\" before anything is added",
+      "subject": "An empty ink-navy clothes rail with three bare wooden hangers."
+    },
+    {
+      "name": "empty-buyers",
+      "group": 2,
+      "title": "No buyers yet",
+      "use": "Buyers panel before anyone says sold",
+      "subject": "An empty manila paper shopping bag with twine handles, standing open."
+    },
+    {
+      "name": "tester",
+      "group": 2,
+      "title": "Test as a buyer",
+      "use": "The pretend-buyer panel",
+      "subject": "A cream paper hand holding a smartphone, with a manila speech bubble popping out of the screen."
+    },
+    {
+      "name": "home-existing-post",
+      "group": 3,
+      "title": "Use a post you already made",
+      "use": "Card on the start screen",
+      "subject": "A cream card printed with a photo of a trainer, like a social media post, pinned to a board with a stamp-red push pin."
+    },
+    {
+      "name": "home-recap",
+      "group": 3,
+      "title": "Show recap",
+      "use": "Last show card and the Recap menu item",
+      "subject": "A long curling cream paper receipt with a manila rosette badge pinned to it."
+    },
+    {
+      "name": "setup-shop",
+      "group": 3,
+      "title": "Your shop",
+      "use": "Setup card: the WooCommerce shop; AI step: product created",
+      "subject": "A small market-stall shop front with an ink-navy and cream striped awning and a manila price tag hanging in the window."
+    },
+    {
+      "name": "setup-meta",
+      "group": 3,
+      "title": "Facebook and Instagram",
+      "use": "Setup card: connect your Page",
+      "subject": "An ink-navy electrical plug about to connect into a cream wall socket, with a small manila speech bubble floating above it."
+    },
+    {
+      "name": "state-held",
+      "group": 3,
+      "title": "Held for a buyer",
+      "use": "Items held while the buyer pays; waiting-for-payment total",
+      "subject": "A manila price tag with a small ink-navy padlock locked through its hole."
+    },
+    {
+      "name": "state-expired",
+      "group": 3,
+      "title": "Time ran out",
+      "use": "Unpaid holds that were released; expired checkout",
+      "subject": "An hourglass with a manila wooden frame and all the sand run to the bottom."
+    },
+    {
+      "name": "ai-rule",
+      "group": 3,
+      "title": "Instant rule",
+      "use": "Comments understood instantly without AI",
+      "subject": "A chunky manila lightning bolt cut from thick card."
+    },
+    {
+      "name": "btn-remove",
+      "group": 3,
+      "title": "Remove",
+      "use": "Remove item, Clear everything",
+      "subject": "A small ink-navy paper waste bin with a crumpled manila price tag dropping into it."
+    },
+    {
+      "name": "btn-stop",
+      "group": 3,
+      "title": "Stop selling",
+      "use": "The Stop selling button",
+      "subject": "A stamp-red octagonal stop sign with a cream border, blank, on a short ink-navy post."
+    },
+    {
+      "name": "empty-comments",
+      "group": 3,
+      "title": "No comments yet",
+      "use": "Comments panel before anyone comments",
+      "subject": "Two empty cream speech bubbles leaning on each other, quiet and resting."
+    },
+    {
+      "name": "camera-blocked",
+      "group": 3,
+      "title": "Camera blocked",
+      "use": "When Chrome blocks the camera or it's busy",
+      "subject": "A small round ink-navy webcam with a stamp-red padlock hanging in front of its lens."
+    },
+    {
+      "name": "vision-miss",
+      "group": 3,
+      "title": "Couldn't spot it",
+      "use": "When the AI can't find the item in the picture",
+      "subject": "A magnifying glass with a manila handle, and a stamp-red question mark seen through its lens."
+    },
+    {
+      "name": "menu-skip",
+      "group": 3,
+      "title": "Skip ahead",
+      "use": "More menu: skip ahead in time",
+      "subject": "A round manila alarm clock with two ink-navy fast-forward arrows beside it."
+    },
+    {
+      "name": "menu-overlay",
+      "group": 3,
+      "title": "Stream overlay",
+      "use": "More menu: the overlay for OBS",
+      "subject": "A small ink-navy TV screen with a manila price tag hanging across its top corner."
+    },
+    {
+      "name": "pay-parcel",
+      "group": 3,
+      "title": "Your order",
+      "use": "The buyer's checkout page",
+      "subject": "A parcel wrapped in kraft paper and tied with twine, with a manila price tag on the string."
+    },
+    {
+      "name": "pay-done",
+      "group": 3,
+      "title": "Order paid",
+      "use": "The buyer's thank-you page",
+      "subject": "A parcel wrapped in kraft paper and tied with twine, with a round cash-green badge holding a cream tick mark."
+    },
+    {
+      "name": "signin",
+      "group": 3,
+      "title": "Seller sign in",
+      "use": "The sign-in page",
+      "subject": "An old ink-navy key tied to a manila price tag with a piece of string."
+    }
+  ],
+  "sheets": [
+    {
+      "n": 1,
+      "title": "Start screen",
+      "names": [
+        "home-posts",
+        "home-live",
+        "home-demo",
+        "home-existing-post",
+        "home-recap",
+        "signin"
+      ]
+    },
+    {
+      "n": 2,
+      "title": "Selling steps",
+      "names": [
+        "step-add",
+        "step-publish",
+        "step-sold",
+        "paid",
+        "state-held",
+        "state-expired"
+      ]
+    },
+    {
+      "n": 3,
+      "title": "Buttons",
+      "names": [
+        "btn-camera",
+        "btn-new-item",
+        "btn-photo",
+        "btn-look",
+        "btn-remove",
+        "btn-stop"
+      ]
+    },
+    {
+      "n": 4,
+      "title": "Meta AI models",
+      "names": [
+        "ai-spark",
+        "ai-sam",
+        "ai-voice",
+        "ai-image",
+        "ai-write",
+        "ai-read"
+      ]
+    },
+    {
+      "n": 5,
+      "title": "Buyers",
+      "names": [
+        "state-needs-you",
+        "state-link-sent",
+        "state-waitlist",
+        "tester",
+        "ai-rule",
+        "setup-meta"
+      ]
+    },
+    {
+      "n": 6,
+      "title": "Empty screens and problems",
+      "names": [
+        "empty-item",
+        "empty-buyers",
+        "empty-comments",
+        "camera-blocked",
+        "vision-miss",
+        "setup-shop"
+      ]
+    },
+    {
+      "n": 7,
+      "title": "Extras",
+      "names": [
+        "menu-skip",
+        "menu-overlay",
+        "pay-parcel",
+        "pay-done"
+      ]
+    }
+  ]
+}

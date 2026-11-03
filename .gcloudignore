@@ -1,0 +1,15 @@
+# Files not uploaded to Cloud Build
+.git/
+.gitignore
+node_modules/
+data/
+.env
+.env.*
+!.env.example
+deploy/*.env.yaml
+.playwright-mcp/
+*.log
+# WordPress plugin: installed on the Woo site, not part of the server (and it makes buildpacks pick PHP)
+woo-plugin/
+# Icon sources (sheets, originals); the cleaned icons ship from public/art/
+/art/

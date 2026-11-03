@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Test Checkout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared/tokens.css" />
+  <link rel="stylesheet" href="/shared/art.css" />
+  <style>
+    body { min-height: 100vh; display: grid; place-items: start center; padding: 24px 16px; }
+    main { width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 16px; }
+    .shop { font-weight: 850; font-stretch: 75%; font-size: 24px; }
+    .note { background: var(--manila-soft); color: var(--manila-ink); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+    ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+    li { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; }
+    li img, li .ph { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; background: var(--panel-2); }
+    li .p { font-weight: 700; }
+    .total { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--line); padding-top: 12px; }
+    .total b { font-size: 34px; font-weight: 900; font-stretch: 65%; }
+    button { appearance: none; border: 0; border-radius: 10px; padding: 14px; background: var(--ink); color: var(--panel); font-weight: 800; font-size: 17px; cursor: pointer; }
+    button:disabled { opacity: .5; }
+    .done { text-align: center; display: grid; gap: 6px; }
+    .done .big { font-size: 44px; font-weight: 900; font-stretch: 62%; color: var(--cash); }
+    .err { color: var(--stamp); }
+    main > .art, .done .art { justify-self: center; }
+    .done { justify-items: center; }
+  </style>
+</head>
+<body>
+  <main id="m"><p>Loading your order…</p></main>
+  <script type="module">
+    import { esc, money } from '/shared/live.js';
+    const m = document.getElementById('m');
+    const id = location.pathname.split('/').pop();
+    async function load() {
+      const r = await fetch(`/api/mock/order/${id}`);
+      if (!r.ok) { m.innerHTML = '<span class="art xl" style="--art:url(/art/vision-miss.webp)" aria-hidden="true"></span><p class="err">We could not find this order. Check the link in your messages.</p>'; return; }
+      const { order: o, shopName } = await r.json();
+      const sym = o.currencySymbol || '£';
+      if (o.status === 'processing' || o.status === 'completed') { paid(o, sym, shopName); return; }
+      if (o.status === 'cancelled' || !o.lines.length) { m.innerHTML = `<div class="shop">${esc(shopName)}</div><span class="art xl" style="--art:url(/art/state-expired.webp)" aria-hidden="true"></span><p>This order was released because it wasn't paid in time.</p>`; return; }
+      m.innerHTML = `<div class="shop">${esc(shopName)}</div>
+        <span class="art xxl" style="--art:url(/art/pay-parcel.webp)" aria-hidden="true"></span>
+        <div class="note">Test checkout. No card is taken; tapping Pay marks the order as paid.</div>
+        <ul>${o.lines.map((l) => `<li>${l.image ? `<img src="${esc(l.image)}" alt="" />` : '<span class="ph"></span>'}<span>${esc(l.name)}${l.qty > 1 ? ` ×${l.qty}` : ''}</span><span class="p">${money(sym, l.price * l.qty)}</span></li>`).join('')}</ul>
+        <div class="total"><span>Order #${o.id}</span><b>${money(sym, o.total)}</b></div>
+        <button id="pay">Pay ${money(sym, o.total)}</button>`;
+      document.getElementById('pay').onclick = async (e) => {
+        e.target.disabled = true;
+        const p = await fetch(`/api/mock/pay/${id}`, { method: 'POST' });
+        if (p.ok) paid(o, sym, shopName); else { e.target.disabled = false; e.target.textContent = 'Try again'; }
+      };
+    }
+    function paid(o, sym, shopName) {
+      m.innerHTML = `<div class="shop">${esc(shopName)}</div><div class="done"><span class="art xxl" style="--art:url(/art/pay-done.webp)" aria-hidden="true"></span><span class="big">Paid ${money(sym, o.total)}</span><span>Thanks! Your order #${o.id} is confirmed. We'll post it out this week.</span></div>`;
+    }
+    load();
+  </script>
+</body>
+</html>

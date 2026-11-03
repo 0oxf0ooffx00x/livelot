@@ -1,0 +1,133 @@
+LIVELOT UI IMAGES: 7 PROMPTS
+=============================
+
+How to use
+- Paste each prompt below into ChatGPT or Gemini (one chat for all 7, so the style matches).
+- Each prompt makes ONE image: a sheet of 6 icons (the last one has 4).
+- Save the 7 images as sheet-1.png ... sheet-7.png (any image type is fine) into:
+    /home/sm/cod/LiveLot/art/sheets/
+  then tell Claude. Claude cuts them up, cleans the backgrounds and puts every icon in the app.
+- If one icon on a sheet comes out wrong, just ask the chat to redo that sheet.
+- Sheets 1-3 are already done (Gemini). In ChatGPT, attach art/sheets/sheet-2.jpg with the first prompt
+  and add: "Match the style of the attached image exactly." so the new sheets look the same.
+
+----------------------------------------------------------------------
+PROMPT 1 of 7: Start screen   (save as sheet-1)
+----------------------------------------------------------------------
+Create one landscape (3:2) image: a sheet of 6 separate icons laid out in a neat grid of 3 columns and 2 rows. Leave wide empty gaps between the icons so none of them touch or overlap, and keep every icon fully inside its own cell. Plain solid pure white background everywhere.
+
+Style for every icon: a tactile paper-craft 3D icon, as if built by hand from thick matte card and kraft paper for a market stall. Soft rounded edges, visible layered paper edges, very fine paper grain, soft even light from the top left, gentle shading, no glossy highlights. Use only these colours: manila yellow #E9C46A, ink navy #1C2547, stamp red #C7322B, cash green #23764A, cream #F7F0DC, pale blue-grey #C9D1DF. Each icon is one subject (or a tight little group) in three-quarter view. No words, letters, numbers, labels or captions anywhere. No floor, no cast shadows.
+
+Top row, left to right:
+1. A smartphone standing upright showing a photo post of a folded knitted jumper. A manila price tag on a string hangs from the corner of the phone, and a small cream speech bubble pops out beside it.
+2. A smartphone on a small tripod, filming, with a glowing stamp-red recording dot on top and a manila price tag on a string hanging from the tripod.
+3. A tiny paper theatre stage with ink-navy curtains pulled open, and a manila price tag hanging in a soft spotlight in the middle of the stage.
+Bottom row, left to right:
+4. A cream card printed with a photo of a trainer, like a social media post, pinned to a board with a stamp-red push pin.
+5. A long curling cream paper receipt with a manila rosette badge pinned to it.
+6. An old ink-navy key tied to a manila price tag with a piece of string.
+
+----------------------------------------------------------------------
+PROMPT 2 of 7: Selling steps   (save as sheet-2)
+----------------------------------------------------------------------
+Create one landscape (3:2) image: a sheet of 6 separate icons laid out in a neat grid of 3 columns and 2 rows. Leave wide empty gaps between the icons so none of them touch or overlap, and keep every icon fully inside its own cell. Plain solid pure white background everywhere.
+
+Style for every icon: a tactile paper-craft 3D icon, as if built by hand from thick matte card and kraft paper for a market stall. Soft rounded edges, visible layered paper edges, very fine paper grain, soft even light from the top left, gentle shading, no glossy highlights. Use only these colours: manila yellow #E9C46A, ink navy #1C2547, stamp red #C7322B, cash green #23764A, cream #F7F0DC, pale blue-grey #C9D1DF. Each icon is one subject (or a tight little group) in three-quarter view. No words, letters, numbers, labels or captions anywhere. No floor, no cast shadows.
+
+Top row, left to right:
+1. Two cream paper hands holding up a folded manila jumper, framed by four ink-navy camera viewfinder corner brackets.
+2. A manila price tag with a big cash-green tick on it, flying forward with three short motion lines behind it.
+3. A cream speech bubble with a stamp-red rubber stamp pressing down onto it, as if stamping it.
+Bottom row, left to right:
+4. A small stack of manila coins and a folded cash-green banknote, with a round cash-green badge holding a cream tick mark.
+5. A manila price tag with a small ink-navy padlock locked through its hole.
+6. An hourglass with a manila wooden frame and all the sand run to the bottom.
+
+----------------------------------------------------------------------
+PROMPT 3 of 7: Buttons   (save as sheet-3)
+----------------------------------------------------------------------
+Create one landscape (3:2) image: a sheet of 6 separate icons laid out in a neat grid of 3 columns and 2 rows. Leave wide empty gaps between the icons so none of them touch or overlap, and keep every icon fully inside its own cell. Plain solid pure white background everywhere.
+
+Style for every icon: a tactile paper-craft 3D icon, as if built by hand from thick matte card and kraft paper for a market stall. Soft rounded edges, visible layered paper edges, very fine paper grain, soft even light from the top left, gentle shading, no glossy highlights. Use only these colours: manila yellow #E9C46A, ink navy #1C2547, stamp red #C7322B, cash green #23764A, cream #F7F0DC, pale blue-grey #C9D1DF. Each icon is one subject (or a tight little group) in three-quarter view. No words, letters, numbers, labels or captions anywhere. No floor, no cast shadows.
+
+Top row, left to right:
+1. A small round webcam on a little stand, lens facing us, with a tiny cash-green light glowing on top.
+2. A wooden clothes hanger with a fresh manila price tag hanging from it, and a chunky manila plus sign beside it.
+3. A cream instant-camera photo print showing a simple trainer shoe, with a curved ink-navy arrow rising up out of it.
+Bottom row, left to right:
+4. A magnifying glass with a manila handle, an ink-navy rim and a pale blue-grey glass lens.
+5. A small ink-navy paper waste bin with a crumpled manila price tag dropping into it.
+6. A stamp-red octagonal stop sign with a cream border, blank, on a short ink-navy post.
+
+----------------------------------------------------------------------
+PROMPT 4 of 7: Meta AI models   (save as sheet-4)
+----------------------------------------------------------------------
+Create one landscape (3:2) image: a sheet of 6 separate icons laid out in a neat grid of 3 columns and 2 rows. Leave wide empty gaps between the icons so none of them touch or overlap, and keep every icon fully inside its own cell. Plain solid pure white background everywhere.
+
+Style for every icon: a tactile paper-craft 3D icon, as if built by hand from thick matte card and kraft paper for a market stall. Soft rounded edges, visible layered paper edges, very fine paper grain, soft even light from the top left, gentle shading, no glossy highlights. Use only these colours: manila yellow #E9C46A, ink navy #1C2547, stamp red #C7322B, cash green #23764A, cream #F7F0DC, pale blue-grey #C9D1DF. Each icon is one subject (or a tight little group) in three-quarter view. No words, letters, numbers, labels or captions anywhere. No floor, no cast shadows.
+
+Top row, left to right:
+1. A friendly paper eye with an ink-navy iris and a small manila sparkle star at its corner.
+2. A pair of ink-navy scissors cutting along a dashed outline around a manila jumper shape on a cream card.
+3. A retro ink-navy microphone with three curved manila sound-wave strips coming from it.
+Bottom row, left to right:
+4. A small photo-studio softbox light shining onto a cream picture frame, with a manila sparkle in the frame's corner.
+5. A pencil with a manila body and stamp-red eraser writing on a cream price tag.
+6. Three small cream speech bubbles dropping into an ink-navy funnel, with one coming out of the bottom wearing a cash-green tick.
+
+----------------------------------------------------------------------
+PROMPT 5 of 7: Buyers   (save as sheet-5)
+----------------------------------------------------------------------
+Create one landscape (3:2) image: a sheet of 6 separate icons laid out in a neat grid of 3 columns and 2 rows. Leave wide empty gaps between the icons so none of them touch or overlap, and keep every icon fully inside its own cell. Plain solid pure white background everywhere.
+
+Style for every icon: a tactile paper-craft 3D icon, as if built by hand from thick matte card and kraft paper for a market stall. Soft rounded edges, visible layered paper edges, very fine paper grain, soft even light from the top left, gentle shading, no glossy highlights. Use only these colours: manila yellow #E9C46A, ink navy #1C2547, stamp red #C7322B, cash green #23764A, cream #F7F0DC, pale blue-grey #C9D1DF. Each icon is one subject (or a tight little group) in three-quarter view. No words, letters, numbers, labels or captions anywhere. No floor, no cast shadows.
+
+Top row, left to right:
+1. A cream paper hand raised up high, with a small manila question-mark bubble beside it.
+2. A cream envelope flying forward, with a manila price tag tied to it and two short motion lines behind it.
+3. A stamp-red paper queue ticket curling out of a small ink-navy ticket dispenser.
+Bottom row, left to right:
+4. A cream paper hand holding a smartphone, with a manila speech bubble popping out of the screen.
+5. A chunky manila lightning bolt cut from thick card.
+6. An ink-navy electrical plug about to connect into a cream wall socket, with a small manila speech bubble floating above it.
+
+----------------------------------------------------------------------
+PROMPT 6 of 7: Empty screens and problems   (save as sheet-6)
+----------------------------------------------------------------------
+Create one landscape (3:2) image: a sheet of 6 separate icons laid out in a neat grid of 3 columns and 2 rows. Leave wide empty gaps between the icons so none of them touch or overlap, and keep every icon fully inside its own cell. Plain solid pure white background everywhere.
+
+Style for every icon: a tactile paper-craft 3D icon, as if built by hand from thick matte card and kraft paper for a market stall. Soft rounded edges, visible layered paper edges, very fine paper grain, soft even light from the top left, gentle shading, no glossy highlights. Use only these colours: manila yellow #E9C46A, ink navy #1C2547, stamp red #C7322B, cash green #23764A, cream #F7F0DC, pale blue-grey #C9D1DF. Each icon is one subject (or a tight little group) in three-quarter view. No words, letters, numbers, labels or captions anywhere. No floor, no cast shadows.
+
+Top row, left to right:
+1. An empty ink-navy clothes rail with three bare wooden hangers.
+2. An empty manila paper shopping bag with twine handles, standing open.
+3. Two empty cream speech bubbles leaning on each other, quiet and resting.
+Bottom row, left to right:
+4. A small round ink-navy webcam with a stamp-red padlock hanging in front of its lens.
+5. A magnifying glass with a manila handle, and a stamp-red question mark seen through its lens.
+6. A small market-stall shop front with an ink-navy and cream striped awning and a manila price tag hanging in the window.
+
+----------------------------------------------------------------------
+PROMPT 7 of 7: Extras   (save as sheet-7)
+----------------------------------------------------------------------
+Create one square (1:1) image: a sheet of 4 separate icons laid out in a neat grid of 2 columns and 2 rows. Leave wide empty gaps between the icons so none of them touch or overlap, and keep every icon fully inside its own cell. Plain solid pure white background everywhere.
+
+Style for every icon: a tactile paper-craft 3D icon, as if built by hand from thick matte card and kraft paper for a market stall. Soft rounded edges, visible layered paper edges, very fine paper grain, soft even light from the top left, gentle shading, no glossy highlights. Use only these colours: manila yellow #E9C46A, ink navy #1C2547, stamp red #C7322B, cash green #23764A, cream #F7F0DC, pale blue-grey #C9D1DF. Each icon is one subject (or a tight little group) in three-quarter view. No words, letters, numbers, labels or captions anywhere. No floor, no cast shadows.
+
+Top row, left to right:
+1. A round manila alarm clock with two ink-navy fast-forward arrows beside it.
+2. A small ink-navy TV screen with a manila price tag hanging across its top corner.
+Bottom row, left to right:
+3. A parcel wrapped in kraft paper and tied with twine, with a manila price tag on the string.
+4. A parcel wrapped in kraft paper and tied with twine, with a round cash-green badge holding a cream tick mark.
+
+----------------------------------------------------------------------
+Where each icon goes (for reference)
+----------------------------------------------------------------------
+Sheet 1: 1 Sell with posts, 2 Go live, 3 Watch a demo show, 4 Use a post you already made, 5 Show recap, 6 Seller sign in
+Sheet 2: 1 Add an item, 2 Check and publish, 3 Wait for "sold", 4 Paid, 5 Held for a buyer, 6 Time ran out
+Sheet 3: 1 Use camera, 2 New item, 3 Upload a photo, 4 Look again, 5 Remove, 6 Stop selling
+Sheet 4: 1 Muse Spark looks, 2 SAM 3.1 cuts it out, 3 Muse Voice listens, 4 Muse Image cleans the photo, 5 Muse Spark writes the listing, 6 Muse Spark reads comments
+Sheet 5: 1 Needs you, 2 Pay link sent, 3 Waiting in line, 4 Test as a buyer, 5 Instant rule, 6 Facebook and Instagram
+Sheet 6: 1 No item yet, 2 No buyers yet, 3 No comments yet, 4 Camera blocked, 5 Couldn't spot it, 6 Your shop
+Sheet 7: 1 Skip ahead, 2 Stream overlay, 3 Your order, 4 Order paid

@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LiveLot Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared/tokens.css" />
+  <link rel="stylesheet" href="/shared/art.css" />
+  <style>
+    body { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; padding: 16px; font-size: 14px; }
+    .cam { position: relative; background: #0d1020; border-radius: 12px; overflow: hidden; aspect-ratio: 16 / 9; align-self: start; }
+    video { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .cam .empty { position: absolute; inset: 0; display: grid; place-items: center; color: #aab; text-align: center; padding: 24px; }
+    .cam .empty[hidden] { display: none; }
+    .cam-msg { display: grid; gap: 14px; justify-items: center; max-width: 520px; }
+    .cam-on { font-size: 26px; padding: 14px 28px; }
+    .cam-err { margin: 0; background: #fbe5e3; color: #8c1d18; border-radius: 10px; padding: 12px 14px; font-size: 15px; line-height: 1.45; text-align: left; }
+    .cam-err[hidden] { display: none; }
+    .cam-tip { margin: 0; font-size: 13px; color: #8f96b3; }
+    .cap { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); max-width: 86%; background: rgba(10, 12, 28, .78); color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 18px; line-height: 1.35; }
+    .cap:empty { display: none; }
+    .cap i { opacity: .65; font-style: normal; }
+    .flash { position: absolute; inset: 0; border: 6px solid var(--manila); border-radius: 12px; opacity: 0; pointer-events: none; }
+    .flash.on { animation: flash .8s ease-out; }
+    @keyframes flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+    aside { display: grid; gap: 12px; align-content: start; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 10px; }
+    h1 { font-size: 22px; font-weight: 850; font-stretch: 75%; margin: 0; }
+    h2 { font-size: 14px; margin: 0; }
+    .next { appearance: none; border: 0; border-radius: 12px; background: var(--manila); color: #33260a; padding: 18px; font-weight: 900; font-stretch: 68%; font-size: 30px; cursor: pointer; box-shadow: inset 0 -4px 0 rgba(0,0,0,.12); }
+    .next:active { transform: translateY(2px); box-shadow: none; }
+    .next { display: flex; align-items: center; gap: 14px; text-align: left; }
+    .next .art { --plate: #f7f0dc; }
+    .next small { display: block; font-size: 14px; font-weight: 600; font-stretch: 100%; opacity: .75; }
+    .next:disabled { opacity: .5; cursor: not-allowed; }
+    label.f { display: grid; gap: 4px; font-size: 12px; color: var(--ink-3); font-weight: 600; }
+    select, button.b { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; background: var(--panel); color: var(--ink); }
+    button.b { cursor: pointer; font-weight: 650; }
+    button.b.on { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .st { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; font-size: 12.5px; color: var(--ink-2); }
+    .st b { color: var(--ink); font-weight: 650; text-align: right; }
+    .ok { color: var(--cash) !important; }
+    .bad { color: var(--stamp) !important; }
+    .lot { display: grid; gap: 4px; }
+    .lot .t { font-weight: 700; font-size: 16px; }
+    .lot .p { font-weight: 900; font-stretch: 65%; font-size: 34px; line-height: 1; }
+    .lot .s { color: var(--ink-3); font-size: 12.5px; }
+    .tagn { display: inline-block; background: var(--manila); color: #33260a; font-weight: 900; font-stretch: 65%; font-size: 17px; padding: 1px 10px 1px 14px; border-radius: 3px 10px 10px 3px; justify-self: start; }
+    .tips { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 12.5px; display: grid; gap: 4px; }
+    @media (max-width: 860px) { body { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="cam">
+    <video id="video" autoplay muted playsinline></video>
+    <div class="empty" id="camEmpty">
+      <div class="cam-msg">
+        <span class="art xxl" style="--art:url(/art/btn-camera.webp)" aria-hidden="true"></span>
+        <button class="next cam-on" id="camOn">Turn on camera</button>
+        <p id="camErr" class="cam-err" role="alert" hidden></p>
+        <p class="cam-tip">Only one app can use a laptop camera at a time. Close Zoom, Meet or Teams, and in OBS remove any “Video Capture Device” that uses this camera.</p>
+      </div>
+    </div>
+    <div class="cap" id="cap"></div>
+    <div class="flash" id="flash"></div>
+  </div>
+  <aside>
+    <div class="card">
+      <h1>Studio</h1>
+      <button class="next" id="next" disabled><span class="art l" style="--art:url(/art/btn-new-item.webp)" aria-hidden="true"></span><span>Next lot<small>Space, or say “next lot”</small></span></button>
+      <div class="lot" id="lot"></div>
+    </div>
+    <div class="card">
+      <h2>Camera and microphone</h2>
+      <label class="f">Camera<select id="camSel"></select></label>
+      <label class="f">Microphone<select id="micSel"></select></label>
+      <label class="f">Speech language<select id="lang"><option>en-GB</option><option>en-US</option><option>en-AU</option><option>en-IE</option></select></label>
+      <div class="row"><button class="b" id="startBtn">Start camera and mic</button><button class="b" id="capBtn" title="Browser live captions">Captions</button></div>
+    </div>
+    <div class="card">
+      <h2>What LiveLot is getting</h2>
+      <div class="st" id="status"></div>
+      <ol class="tips">
+        <li>Hold the item up to the camera, then say what it is, the size and the price.</li>
+        <li>“Lot three is…” and “I’ve got two of these” both work.</li>
+        <li>Approve the listing on the dashboard with Enter.</li>
+      </ol>
+    </div>
+  </aside>
+
+  <script type="module">
+    import { connect, api, esc, money } from '/shared/live.js';
+    import { createStudio } from '/shared/studio.js';
+    const $ = (s) => document.getElementById(s);
+    let stat = { frames: 0, frameErr: '', speech: 'off', asr: 0, asrErr: '' };
+
+    const S = connect(() => { drawLot(); drawStatus(); });
+    const studio = createStudio({
+      video: $('video'),
+      isSelling: () => S.show?.status === 'live',
+      hasAsr: () => Boolean(S.ai?.asr),
+      lang: () => $('lang').value,
+      onStatus: (st) => { stat = st; drawStatus(); $('capBtn').classList.toggle('on', st.speech === 'listening'); },
+      onCaption: (text, final) => { $('cap').innerHTML = final ? esc(text) : `<i>${esc(text)}</i>`; },
+    });
+
+    function drawLot() {
+      const live = S.show?.status === 'live';
+      $('next').disabled = !live;
+      const lots = [...S.lots.values()].filter((l) => l.status !== 'cancelled').sort((a, b) => a.lotNumber - b.lotNumber);
+      const l = lots[lots.length - 1];
+      if (!live) { $('lot').innerHTML = '<span class="s">Press Start selling on the dashboard first.</span>'; return; }
+      if (!l) { $('lot').innerHTML = '<span class="s">No item yet. Press Next lot and hold up your first item.</span>'; return; }
+      const sizes = l.variants.length > 1 || l.variants[0].key !== 'default' ? l.variants.map((v) => `${v.label} (${l.stock[v.key]})`).join(', ') : `${l.stock.default} left`;
+      const status = { detecting: 'Looking at the camera…', draft: 'Draft: check it on the dashboard', published: 'On sale', sold_out: 'Sold out' }[l.status] || l.status;
+      $('lot').innerHTML = `<span class="tagn">Lot ${l.lotNumber}</span><span class="t">${esc(l.title || l.concept || '…')}</span>
+        <span class="p">${l.price ? money(S.config.currencySymbol || '£', l.price) : ''}</span><span class="s">${esc(status)}. ${esc(sizes)}</span>`;
+    }
+    function drawStatus() {
+      const asrOn = Boolean(S.ai?.asr);
+      $('status').innerHTML = `
+        <span>Connection</span><b class="${S.connected ? 'ok' : 'bad'}">${S.connected ? 'Connected' : 'Reconnecting'}</b>
+        <span>Frames sent to Muse Spark</span><b>${stat.frames}${stat.frameErr ? ` <span class="bad">${esc(stat.frameErr)}</span>` : ''}</b>
+        <span>Live captions</span><b>${esc(stat.speech)}</b>
+        <span>Muse Voice Transcribe</span><b>${asrOn ? `${stat.asr} chunks` : 'not configured'}${stat.asrErr ? ` <span class="bad">${esc(stat.asrErr)}</span>` : ''}</b>`;
+    }
+
+    // ---------------- devices
+    async function listDevices() {
+      if (!navigator.mediaDevices?.enumerateDevices) return;
+      const { cameras, mics } = await studio.devices();
+      const fill = (sel, list) => {
+        const cur = sel.value;
+        sel.innerHTML = list.map((d) => `<option value="${esc(d.id)}">${esc(d.label)}</option>`).join('');
+        if (cur && list.some((d) => d.id === cur)) sel.value = cur;
+      };
+      fill($('camSel'), cameras);
+      fill($('micSel'), mics);
+    }
+    function showErr(msg, blocking = true) {
+      $('camErr').textContent = msg;
+      $('camErr').hidden = false;
+      if (blocking) $('camEmpty').hidden = false;
+      else setTimeout(() => { $('camErr').hidden = true; }, 12000);
+    }
+    async function run() {
+      // If Chrome is waiting on its permission prompt, say so: it's easy to miss or dismiss.
+      const waiting = setTimeout(() => showErr('Chrome is asking for permission: click “Allow” in the box at the top-left of the window. If you don\'t see it, click the camera icon at the right of the address bar.', true), 1500);
+      $('camErr').hidden = true;
+      try {
+        const r = await studio.start({ cameraId: $('camSel').value, micId: $('micSel').value });
+        clearTimeout(waiting);
+        $('camErr').hidden = true;
+        $('camEmpty').hidden = true;
+        await listDevices();
+        if (r.cameraId) $('camSel').value = r.cameraId;
+        $('startBtn').textContent = 'Restart';
+        if (r.micNote) showErr(`Camera on, but no microphone: ${r.micNote}`, false);
+      } catch (e) {
+        clearTimeout(waiting);
+        showErr(e.explain || e.message);
+      }
+    }
+    $('startBtn').onclick = run;
+    $('camOn').onclick = run;
+    $('camSel').onchange = () => studio.isOn() && run();
+    $('micSel').onchange = () => studio.isOn() && run();
+    $('capBtn').onclick = () => studio.setCaptions(stat.speech !== 'listening');
+    $('lang').onchange = () => studio.restartSpeech();
+    listDevices();
+    // If camera permission was already granted on this site, start straight away.
+    navigator.permissions?.query({ name: 'camera' }).then((p) => { if (p.state === 'granted') run(); }).catch(() => {});
+
+    // ---------------- next lot
+    async function nextLot() {
+      if ($('next').disabled) return;
+      $('flash').classList.remove('on'); void $('flash').offsetWidth; $('flash').classList.add('on');
+      try { await api('/api/next-lot', {}); } catch (e) { stat.frameErr = e.message; drawStatus(); }
+    }
+    $('next').onclick = nextLot;
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(document.activeElement?.tagName) && e.code === 'Space') return;
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+      if (e.code === 'Space' || e.key === 'n' || e.key === 'N') { e.preventDefault(); nextLot(); }
+    });
+    drawStatus();
+  </script>
+</body>
+</html>

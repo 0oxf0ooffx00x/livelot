@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LiveLot Control Room</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared/tokens.css" />
+  <link rel="stylesheet" href="/shared/art.css" />
+  <link rel="stylesheet" href="/dashboard/dashboard.css" />
+</head>
+<body class="mode-start">
+  <header class="top">
+    <a class="brand" href="/dashboard/" aria-label="LiveLot home">
+      <svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true"><path d="M3 6h17l9 10-9 10H3z" fill="var(--manila)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><circle cx="20" cy="16" r="2.6" fill="var(--ink)"/></svg>
+      <span>LiveLot</span>
+    </a>
+    <div id="showStatus" class="show-status"></div>
+    <div id="stats" class="stats" aria-live="polite"></div>
+    <div class="actions" id="actions"></div>
+  </header>
+
+  <!-- Before selling: pick how -->
+  <section id="start" class="start" aria-labelledby="startTitle">
+    <h1 id="startTitle">How are you selling today?</h1>
+    <div class="ways">
+      <button class="way big recommended" data-act="start-posts">
+        <span class="art xxl" style="--art:url(/art/home-posts.webp)" aria-hidden="true"></span>
+        <span class="way-badge">Works today</span>
+        <span class="way-title">Sell with posts</span>
+        <span class="way-text">Add an item and LiveLot posts it to your Facebook Page and Instagram. The first person to comment <b>sold</b> gets a pay link by private message.</span>
+        <span class="way-go">Start selling with posts</span>
+      </button>
+      <button class="way big" data-act="start">
+        <span class="art xxl" style="--art:url(/art/home-live.webp)" aria-hidden="true"></span>
+        <span class="way-title">Go live</span>
+        <span class="way-text">Stream on Facebook or Instagram Live and hold items up. Viewers comment <b>sold</b> and get their pay link in seconds.</span>
+        <span class="way-fine">Facebook only lets Pages with 100+ followers go live.</span>
+        <span class="way-go">Start a live show</span>
+      </button>
+    </div>
+    <div class="ways three">
+      <button class="way" data-act="existing" aria-expanded="false" aria-controls="postForm">
+        <span class="art xl" style="--art:url(/art/home-existing-post.webp)" aria-hidden="true"></span>
+        <span class="way-title">Use a post you already made</span>
+        <span class="way-text">LiveLot reads its comments and sends pay links.</span>
+      </button>
+      <button class="way" data-act="replay">
+        <span class="art xl" style="--art:url(/art/home-demo.webp)" aria-hidden="true"></span>
+        <span class="way-title">Watch a demo show</span>
+        <span class="way-text">Pretend buyers. Nothing real is posted or sold.</span>
+      </button>
+      <button class="way" data-act="recap" id="lastShow" hidden>
+        <span class="art xl" style="--art:url(/art/home-recap.webp)" aria-hidden="true"></span>
+        <span class="way-title">Last show</span>
+        <span class="way-text" id="lastShowText"></span>
+      </button>
+    </div>
+    <form class="post-form card" id="postForm" autocomplete="off" hidden>
+      <p>Paste the ID from the post's link. You can fill in one or both.</p>
+      <label><span>Facebook post ID</span><input name="fbPostId" placeholder="e.g. 1234567890_9876543210" /></label>
+      <label><span>Instagram post ID</span><input name="igMediaId" placeholder="e.g. 17890012345678901" /></label>
+      <button class="bb primary" type="submit"><span class="art" style="--art:url(/art/step-sold.webp)" aria-hidden="true"></span><span>Start on these posts</span></button>
+    </form>
+    <section class="setup" aria-labelledby="setupTitle">
+      <h2 id="setupTitle">Your setup</h2>
+      <div class="setup-list" id="setup"></div>
+    </section>
+  </section>
+
+  <!-- While selling: what to do now -->
+  <section id="now" class="now" aria-live="polite"></section>
+
+  <main class="work" id="work">
+    <section class="card item-card" aria-labelledby="itemHeading">
+      <h2 id="itemHeading" class="visually-hidden">Item</h2>
+      <div class="item-left">
+      <div class="cam" id="camPanel">
+        <div class="cam-off">
+          <span class="art xxl" style="--art:url(/art/btn-camera.webp)" aria-hidden="true"></span>
+          <p class="cam-off-title">Show your item to the camera</p>
+          <p class="cam-off-text">Hold it up and say what it is, the size and the price. The AI does the rest. Or upload a photo you already took.</p>
+          <div class="bb-row">
+            <button class="bb primary" data-act="cam-on"><span class="art" style="--art:url(/art/btn-camera.webp)" aria-hidden="true"></span><span>Use camera</span></button>
+            <button class="bb" data-act="photo"><span class="art" style="--art:url(/art/btn-photo.webp)" aria-hidden="true"></span><span>Upload a photo</span></button>
+          </div>
+        </div>
+        <div class="cam-on-box">
+          <div class="cam-view"><video id="camVideo" autoplay muted playsinline></video><div class="cam-frame" id="camFrame"><span>Hold the item here</span></div><div class="cam-cap" id="camCap"></div><div class="cam-flash" id="camFlash"></div><span class="cam-hint" id="camHint"></span></div>
+          <div class="mic" id="mic">
+            <span class="art m" style="--art:url(/art/ai-voice.webp)" aria-hidden="true"></span>
+            <div class="mic-main">
+              <span class="mic-state" id="micState">Starting the microphone…</span>
+              <span class="meter" aria-hidden="true"><i id="micLevel"></i></span>
+              <label class="mic-pick"><span class="visually-hidden">Microphone</span><select id="micSel"></select></label>
+            </div>
+            <button class="bb small" data-act="mic-test" type="button"><span>Test mic</span></button>
+          </div>
+          <p class="cam-heard" id="camHeard"><span class="art s" style="--art:url(/art/ai-voice.webp)" aria-hidden="true"></span><span>Say what it is, the size and the price. What LiveLot hears shows here.</span></p>
+          <div class="bb-row">
+            <button class="bb primary" data-act="next"><span class="art" style="--art:url(/art/btn-new-item.webp)" aria-hidden="true"></span><span>New item<small>or press N</small></span></button>
+            <button class="bb" data-act="photo"><span class="art" style="--art:url(/art/btn-photo.webp)" aria-hidden="true"></span><span>Upload a photo</span></button>
+            <button class="bb quiet" data-act="cam-off"><span>Camera off</span></button>
+          </div>
+        </div>
+        <div class="cam-err" id="camErr" role="alert" hidden><span class="art l" style="--art:url(/art/camera-blocked.webp)" aria-hidden="true"></span><p id="camErrText"></p></div>
+      </div>
+      <div id="pipeline" class="pipeline"></div>
+      </div>
+      <div id="lotPanel" class="lot"></div>
+    </section>
+
+    <section class="card buyers-card" aria-labelledby="buyersHeading">
+      <header class="card-head"><h2 id="buyersHeading">Buyers</h2><span class="hint" id="ordersHint"></span></header>
+      <div id="review" class="review"></div>
+      <div id="orders" class="orders"></div>
+      <details class="fold comments" id="comments" open>
+        <summary><span class="art l" style="--art:url(/art/ai-read.webp)" aria-hidden="true"></span><span class="fold-title">Comments<small id="feedHint">Muse Spark reads every one and spots the buyers</small></span></summary>
+        <ol id="feed" class="feed" aria-live="polite"></ol>
+      </details>
+      <details class="fold tester" id="tester" hidden>
+        <summary><span class="art l" style="--art:url(/art/tester.webp)" aria-hidden="true"></span><span class="fold-title">Test as a buyer<small id="testerNote"></small></span></summary>
+        <form id="composer" class="composer" autocomplete="off">
+          <div class="composer-row">
+            <div class="seg" role="radiogroup" aria-label="Platform">
+              <label><input type="radio" name="platform" value="facebook" checked /><span>Facebook</span></label>
+              <label><input type="radio" name="platform" value="instagram" /><span>Instagram</span></label>
+            </div>
+            <input name="name" list="names" placeholder="Buyer name" aria-label="Buyer name" value="Sarah Jones" />
+            <datalist id="names"><option>Sarah Jones</option><option>Mike Turner</option><option>Priya Shah</option><option>James O'Neill</option><option>tom.vintage</option><option>Emma Clarke</option></datalist>
+          </div>
+          <p class="chips-label">Tap one to send it:</p>
+          <div class="chips" id="quick"></div>
+          <div class="composer-row">
+            <input name="text" placeholder="Or write your own comment" aria-label="Comment text" required />
+            <button type="submit" class="bb small primary"><span>Send</span></button>
+          </div>
+        </form>
+      </details>
+    </section>
+  </main>
+
+  <section class="shelf" id="bottom">
+    <section class="card items-card" aria-labelledby="itemsHeading">
+      <header class="card-head"><h2 id="itemsHeading">Your items</h2><span class="hint">Click one to see it</span></header>
+      <ol id="rail" class="rail"></ol>
+    </section>
+    <details class="card fold behind" id="behind">
+      <summary><span class="art l" style="--art:url(/art/ai-spark.webp)" aria-hidden="true"></span><span class="fold-title">Behind the scenes<small id="behindHint">Every Meta AI call, as it happens</small></span></summary>
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-tab="trace">Meta AI calls</button>
+        <button role="tab" aria-selected="false" data-tab="log">Log</button>
+      </div>
+      <ol id="trace" class="trace"></ol>
+    </details>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script>
+    // If the dashboard's code didn't start (e.g. a half-updated browser cache), say so instead of dead buttons.
+    setTimeout(function () {
+      if (window.__livelotReady) return;
+      var d = document.createElement('div');
+      d.className = 'update-bar';
+      d.setAttribute('role', 'alert');
+      d.textContent = 'Part of LiveLot didn’t load. Press Ctrl+Shift+R to reload it.';
+      document.body.appendChild(d);
+    }, 5000);
+  </script>
+  <script type="module" src="/dashboard/dashboard.js"></script>
+</body>
+</html>

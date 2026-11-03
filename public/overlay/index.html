@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LiveLot Stream Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet" />
+  <style>
+    /* Add as an OBS Browser Source at 1920x1080 (or ?portrait at 1080x1920). Transparent in OBS. */
+    :root {
+      --manila: #e9c46a; --manila-2: #dcb257; --tag-ink: #33260a; --stamp: #c7322b; --ink: #1c2547; --cash: #23764a;
+      --u: min(1vw, 1.7778vh);
+    }
+    body.portrait { --u: min(1.6vw, 0.9vh); }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; }
+    body { font-family: 'Archivo', system-ui, sans-serif; background: transparent; color: var(--ink); font-variant-numeric: tabular-nums; }
+    body.preview { background: radial-gradient(ellipse at 60% 40%, #6b7690, #2a3046 70%); }
+    body.preview::before { content: 'Overlay preview. In OBS the background is transparent.'; position: fixed; top: calc(var(--u) * 1.4); left: 50%; transform: translateX(-50%); color: rgba(255,255,255,.6); font-size: calc(var(--u) * 1); }
+
+    /* ---------- the swing tag */
+    .stage { position: fixed; left: calc(var(--u) * 3); bottom: calc(var(--u) * 3.2); width: calc(var(--u) * 30); }
+    body.portrait .stage { left: 50%; transform: translateX(-50%); bottom: calc(var(--u) * 14); width: calc(var(--u) * 56); }
+    .string { position: absolute; z-index: 2; left: calc(var(--u) * 4); bottom: calc(100% - var(--u) * 3.5); width: calc(var(--u) * 10); height: calc(var(--u) * 12.5); pointer-events: none; transition: opacity .3s; }
+    .enter .string { animation: strIn .9s ease-out both; }
+    @keyframes strIn { 0%, 40% { opacity: 0; } 100% { opacity: 1; } }
+    .tag {
+      position: relative; transform-origin: calc(var(--u) * 4.4) calc(var(--u) * 3.4);
+      background:
+        repeating-linear-gradient(115deg, rgba(255,255,255,.05) 0 2px, rgba(0,0,0,.025) 2px 5px),
+        linear-gradient(160deg, var(--manila), var(--manila-2));
+      color: var(--tag-ink);
+      clip-path: polygon(calc(var(--u) * 2.4) 0, 100% 0, 100% 100%, calc(var(--u) * 2.4) 100%, 0 calc(100% - var(--u) * 2.4), 0 calc(var(--u) * 2.4));
+      padding: calc(var(--u) * 2.2) calc(var(--u) * 2.4) calc(var(--u) * 2) calc(var(--u) * 7.4);
+      filter: drop-shadow(0 calc(var(--u) * 0.8) calc(var(--u) * 1.2) rgba(0,0,0,.35));
+      min-height: calc(var(--u) * 17);
+    }
+    .tag::before { /* punched hole with a reinforcing ring */
+      content: ''; position: absolute; left: calc(var(--u) * 3.3); top: calc(var(--u) * 2.4); width: calc(var(--u) * 2.2); height: calc(var(--u) * 2.2); border-radius: 50%;
+      background: rgba(20, 22, 40, .55); box-shadow: 0 0 0 calc(var(--u) * 0.55) #f3dc9a, 0 0 0 calc(var(--u) * 0.7) rgba(51,38,10,.35);
+    }
+    .tag .lot { font-weight: 900; font-stretch: 62%; font-size: calc(var(--u) * 2.6); line-height: 1; letter-spacing: .01em; opacity: .8; }
+    .tag .title { font-weight: 750; font-stretch: 85%; font-size: calc(var(--u) * 2.2); line-height: 1.1; margin-top: calc(var(--u) * 0.5); max-height: calc(var(--u) * 4.9); overflow: hidden; }
+    .tag .price { font-weight: 900; font-stretch: 62%; font-size: calc(var(--u) * 8.4); line-height: .9; margin-top: calc(var(--u) * 0.8); letter-spacing: -0.01em; }
+    .tag .sizes { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 0.6); margin-top: calc(var(--u) * 1); }
+    .tag .sizes span { border: calc(var(--u) * 0.18) solid currentColor; border-radius: calc(var(--u) * 0.5); padding: calc(var(--u) * 0.15) calc(var(--u) * 0.7); font-weight: 800; font-size: calc(var(--u) * 1.4); }
+    .tag .sizes span small { font-weight: 600; opacity: .7; font-size: .75em; margin-left: calc(var(--u) * 0.3); }
+    .tag .sizes span.gone { opacity: .4; text-decoration: line-through; }
+    .tag .how { margin-top: calc(var(--u) * 1.2); font-size: calc(var(--u) * 1.35); font-weight: 650; display: flex; gap: calc(var(--u) * 0.6); align-items: center; }
+    .tag .how b { background: var(--tag-ink); color: var(--manila); padding: 0 calc(var(--u) * 0.6); border-radius: calc(var(--u) * 0.35); font-weight: 900; font-stretch: 70%; letter-spacing: .03em; }
+    .tag.coming .price { font-size: calc(var(--u) * 3.4); opacity: .7; }
+
+    .stamp {
+      position: absolute; right: calc(var(--u) * 1.4); bottom: calc(var(--u) * 4.2); transform: rotate(-13deg); color: var(--stamp);
+      border: calc(var(--u) * 0.55) solid var(--stamp); border-radius: calc(var(--u) * 0.9); padding: 0 calc(var(--u) * 1.4);
+      font-weight: 900; font-stretch: 62%; font-size: calc(var(--u) * 7.2); line-height: 1.05; letter-spacing: .05em;
+      mix-blend-mode: multiply; opacity: 0;
+      -webkit-mask-image: repeating-radial-gradient(circle at 30% 40%, #000 0 3px, rgba(0,0,0,.82) 3px 5px);
+      mask-image: repeating-radial-gradient(circle at 30% 40%, #000 0 3px, rgba(0,0,0,.82) 3px 5px);
+    }
+    .sold .stamp { opacity: .92; animation: slam .42s cubic-bezier(.2, 1.6, .4, 1) both; }
+    .sold .tag { animation: thud .35s .12s ease-out both; }
+    @keyframes slam { 0% { transform: rotate(-22deg) scale(2.3); opacity: 0; } 60% { opacity: .95; } 100% { transform: rotate(-13deg) scale(1); opacity: .92; } }
+    @keyframes thud { 30% { transform: translateY(calc(var(--u) * 0.5)) rotate(.6deg); } 100% { transform: none; } }
+    .enter .tag { animation: swingIn .9s cubic-bezier(.3, 1.4, .5, 1) both; }
+    @keyframes swingIn { 0% { transform: translateY(-120%) rotate(-24deg); } 55% { transform: translateY(0) rotate(7deg); } 78% { transform: rotate(-3deg); } 100% { transform: rotate(0); } }
+
+    /* ---------- claim ticker */
+    .ticker { position: fixed; right: calc(var(--u) * 2.4); bottom: calc(var(--u) * 3.2); display: flex; flex-direction: column-reverse; gap: calc(var(--u) * 0.8); width: calc(var(--u) * 27); }
+    body.portrait .ticker { right: 50%; transform: translateX(50%); bottom: auto; top: calc(var(--u) * 16); width: calc(var(--u) * 56); flex-direction: column; }
+    .tk { display: grid; grid-template-columns: auto 1fr; gap: calc(var(--u) * 1); align-items: center; background: rgba(255,255,255,.95); border-radius: calc(var(--u) * 1); padding: calc(var(--u) * 0.9) calc(var(--u) * 1.3); box-shadow: 0 calc(var(--u) * 0.5) calc(var(--u) * 1.4) rgba(0,0,0,.28); font-size: calc(var(--u) * 1.5); line-height: 1.2; animation: tkIn .45s cubic-bezier(.2, 1.3, .4, 1) both; }
+    .tk.out { animation: tkOut .5s ease-in both; }
+    .tk .ic { width: calc(var(--u) * 3); height: calc(var(--u) * 3); border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 900; font-size: calc(var(--u) * 1.5); }
+    .tk.got .ic { background: var(--ink); }
+    .tk.paid .ic { background: var(--cash); }
+    .tk.line .ic { background: #8a90a6; }
+    .tk.promo .ic { background: var(--stamp); }
+    .tk b { font-weight: 800; }
+    .tk small { display: block; color: #5a627d; font-size: .8em; }
+    @keyframes tkIn { from { transform: translateX(110%); opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes tkOut { to { transform: translateX(110%); opacity: 0; } }
+
+    .hint { position: fixed; right: calc(var(--u) * 2.4); top: calc(var(--u) * 2.4); background: rgba(28, 37, 71, .86); color: #fff; padding: calc(var(--u) * 0.7) calc(var(--u) * 1.3); border-radius: calc(var(--u) * 0.8); font-size: calc(var(--u) * 1.35); font-weight: 600; }
+    .hint b { color: var(--manila); }
+    body.portrait .hint { left: 50%; right: auto; transform: translateX(-50%); top: calc(var(--u) * 7); white-space: nowrap; }
+    .hidden { display: none !important; }
+    body[data-auth='missing']::after { content: 'Overlay needs the seller token: add ?token=YOUR_ADMIN_TOKEN to this URL'; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #c7322b; color: #fff; padding: 12px 18px; border-radius: 10px; font: 600 18px system-ui, sans-serif; }
+    @media (prefers-reduced-motion: reduce) { .enter .tag, .sold .stamp, .sold .tag, .tk, .tk.out { animation: none; } }
+  </style>
+</head>
+<body>
+  <div class="hint hidden" id="hint">Comment <b>sold</b> to buy. Your pay link comes by DM.</div>
+  <div class="stage hidden" id="stage" aria-live="polite">
+    <svg class="string" viewBox="0 0 100 90" preserveAspectRatio="none" aria-hidden="true"><path d="M4 90 C 6 60, 40 40, 60 -4" fill="none" stroke="#f4efe2" stroke-width="2.6" stroke-linecap="round" opacity=".9"/></svg>
+    <div class="tag" id="tag"></div>
+    <div class="stamp" aria-hidden="true">SOLD</div>
+  </div>
+  <div class="ticker" id="ticker"></div>
+
+  <script type="module">
+    import { connect, esc, money } from '/shared/live.js';
+    const params = new URLSearchParams(location.search);
+    if (params.has('portrait')) document.body.classList.add('portrait');
+    if (!window.obsstudio && !params.has('clean')) document.body.classList.add('preview');
+
+    const stage = document.getElementById('stage');
+    const tagEl = document.getElementById('tag');
+    const ticker = document.getElementById('ticker');
+    const hint = document.getElementById('hint');
+    let shownLot = null;
+    let shownSold = false;
+    const seen = new Map();
+    let ready = false;
+
+    const S = connect((type, data) => {
+      if (type === 'snapshot') {
+        for (const c of S.claims.values()) seen.set(c.id, c.state);
+        ready = true;
+      } else if (type === 'claim.updated' && ready) onClaim(data);
+      draw();
+    });
+    const sym = () => S.config.currencySymbol || '£';
+
+    function currentLot() {
+      const lots = [...S.lots.values()].filter((l) => l.status !== 'cancelled').sort((a, b) => a.lotNumber - b.lotNumber);
+      return lots[lots.length - 1] || null;
+    }
+
+    function draw() {
+      const live = S.show?.status === 'live';
+      hint.classList.toggle('hidden', !live);
+      const lot = live ? currentLot() : null;
+      if (!lot) { stage.classList.add('hidden'); shownLot = null; return; }
+      stage.classList.remove('hidden');
+      const onSale = lot.status === 'published' || lot.status === 'sold_out';
+      const multi = lot.variants.length > 1 || lot.variants[0].key !== 'default';
+      const total = Object.values(lot.initialStock || {}).reduce((a, n) => a + n, 0);
+      const sizes = multi
+        ? lot.variants.map((v) => `<span class="${lot.stock[v.key] === 0 ? 'gone' : ''}">${esc(v.label)}${(lot.initialStock?.[v.key] ?? 1) > 1 ? `<small>${lot.stock[v.key]} left</small>` : ''}</span>`).join('')
+        : total > 1 ? `<span class="${lot.stock.default === 0 ? 'gone' : ''}">${lot.stock.default} of ${total} left</span>` : '';
+      const how = multi ? 'Comment <b>sold</b> + your size' : 'Comment <b>sold</b> to buy';
+      tagEl.className = `tag ${onSale ? '' : 'coming'}`;
+      tagEl.innerHTML = `<div class="lot">Lot ${lot.lotNumber}</div>
+        <div class="title">${esc(cap(lot.title || lot.concept || 'Coming up…'))}</div>
+        <div class="price">${onSale ? money(sym(), lot.price) : 'Listing…'}</div>
+        ${onSale && sizes ? `<div class="sizes">${sizes}</div>` : ''}
+        ${onSale && lot.status !== 'sold_out' ? `<div class="how">${how}</div>` : ''}`;
+      if (shownLot !== lot.id) {
+        shownLot = lot.id;
+        shownSold = false;
+        stage.classList.remove('enter', 'sold');
+        void stage.offsetWidth;
+        stage.classList.add('enter');
+      }
+      const sold = lot.status === 'sold_out';
+      if (sold && !shownSold) { stage.classList.remove('enter'); void stage.offsetWidth; stage.classList.add('sold'); }
+      if (!sold && shownSold) stage.classList.remove('sold');
+      shownSold = sold;
+    }
+
+    const cap = (t) => String(t).replace(/^./, (c) => c.toUpperCase());
+    const short = (n) => {
+      const s = String(n || 'Someone');
+      if (s.startsWith('@')) return s;
+      const [a, b] = s.split(' ');
+      return b ? `${a} ${b[0]}.` : a;
+    };
+
+    function onClaim(c) {
+      const prev = seen.get(c.id);
+      if (prev === c.state) return;
+      seen.set(c.id, c.state);
+      const lot = S.lots.get(c.itemId);
+      if (!lot) return;
+      const v = c.variant && c.variant !== 'default' ? ` (${esc(lot.variants.find((x) => x.key === c.variant)?.label || c.variant)})` : '';
+      if (c.state === 'invoiced' && c.promoted) add('promo', '★', `<b>${esc(short(c.displayName))}</b> gets Lot ${lot.lotNumber}${v}`, 'Next in line, pay link sent');
+      else if (c.state === 'invoiced') add('got', '✓', `<b>${esc(short(c.displayName))}</b> got Lot ${lot.lotNumber}${v}`, 'Pay link sent by DM');
+      else if (c.state === 'waitlisted') add('line', `${c.waitlistPosition || ''}`, `<b>${esc(short(c.displayName))}</b> is #${c.waitlistPosition} in line`, `for Lot ${lot.lotNumber}${v}`);
+      else if (c.state === 'paid') add('paid', '✓', `<b>${esc(short(c.displayName))}</b> paid`, `Lot ${lot.lotNumber}${v}, ${money(sym(), lot.price * c.qty)}`);
+    }
+
+    function add(kind, icon, text, sub) {
+      const el = document.createElement('div');
+      el.className = `tk ${kind}`;
+      el.innerHTML = `<span class="ic">${icon}</span><span>${text}<small>${sub}</small></span>`;
+      ticker.prepend(el);
+      while (ticker.children.length > 4) ticker.lastElementChild.remove();
+      setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 520); }, 7000);
+    }
+  </script>
+</body>
+</html>

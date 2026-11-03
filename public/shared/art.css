@@ -1,0 +1,25 @@
+/* Paper-craft art used as large icons (public/art/<name>.webp, made from art/PROMPTS.txt).
+   Each image sits on a soft round plate, so it blends with any card colour and a missing
+   image just leaves the plate. */
+:root { --art-plate: #fbf1d3; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) { --art-plate: #efe5c8; }
+}
+.art {
+  --s: 52px;
+  --plate: var(--art-plate);
+  flex: none;
+  display: inline-block;
+  width: var(--s);
+  height: var(--s);
+  background:
+    var(--art) center / contain no-repeat,
+    radial-gradient(circle closest-side at 50% 54%, var(--plate) 0 80%, transparent 81%);
+}
+.art.s { --s: 28px; }
+.art.m { --s: 40px; }
+.art.l { --s: 64px; }
+.art.xl { --s: 96px; }
+.art.xxl { --s: 168px; }
+.art.bare { --plate: transparent; }
+.art.cool { --plate: var(--panel-2); }

@@ -1,0 +1,56 @@
+/* LiveLot tokens: price-tag manila, ballpoint ink, stamp red, cash green, on cool paper. */
+:root {
+  --paper: #eceff3;
+  --panel: #ffffff;
+  --panel-2: #f6f7f9;
+  --line: #d9dee6;
+  --ink: #1c2547;
+  --ink-2: #4a5373;
+  --ink-3: #7c849d;
+  --manila: #e9c46a;
+  --manila-soft: #fbf1d3;
+  --manila-ink: #6b4e0e;
+  --stamp: #c7322b;
+  --stamp-soft: #fbe5e3;
+  --cash: #23764a;
+  --cash-soft: #def2e6;
+  --hold: #2f4fbf;
+  --hold-soft: #e3e9fb;
+  --fb: #1877f2;
+  --ig: #d6249f;
+  --focus: #2f4fbf;
+  --r-s: 6px;
+  --r-m: 10px;
+  --shadow: 0 1px 0 rgba(28, 37, 71, 0.06), 0 6px 18px -10px rgba(28, 37, 71, 0.25);
+  --font: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #12162a;
+    --panel: #1a1f37;
+    --panel-2: #20264a;
+    --line: #2d3560;
+    --ink: #e8ebf6;
+    --ink-2: #b4bad3;
+    --ink-3: #848ba8;
+    --manila-soft: #3a3016;
+    --manila-ink: #f0d58c;
+    --stamp-soft: #43201f;
+    --cash: #49c07f;
+    --cash-soft: #173826;
+    --hold: #8ea6ff;
+    --hold-soft: #222e5e;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 8px 20px -12px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { font-family: var(--font); color: var(--ink); background: var(--paper); font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.cond { font-stretch: 70%; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

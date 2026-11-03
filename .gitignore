@@ -1,0 +1,11 @@
+node_modules/
+data/
+.env
+*.log
+.playwright-mcp/
+deploy/*.env.yaml
+!deploy/cloudrun.env.example.yaml
+deploy/shop/.woo-keys
+
+# generated-image originals (the cleaned versions live in public/art)
+art/raw/

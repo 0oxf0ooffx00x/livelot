@@ -1,0 +1,63 @@
+# LiveLot demo WooCommerce store: WordPress + MariaDB behind Caddy (automatic HTTPS).
+# Lives on the VM at /opt/livelot-shop with a .env next to it (see deploy/shop/README.md).
+x-wp-env: &wpenv
+  WORDPRESS_DB_HOST: db
+  WORDPRESS_DB_USER: wordpress
+  WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+  WORDPRESS_DB_NAME: wordpress
+  WORDPRESS_CONFIG_EXTRA: |
+    define('LIVELOT_URL', '${LIVELOT_URL}');
+    define('LIVELOT_SECRET', '${LIVELOT_SECRET}');
+    define('WP_MEMORY_LIMIT', '256M');
+    define('DISALLOW_FILE_EDIT', true);
+
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db:/var/lib/mysql
+
+  wordpress:
+    image: wordpress:php8.3-apache
+    restart: unless-stopped
+    depends_on: [db]
+    environment: *wpenv
+    volumes:
+      - wp:/var/www/html
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [wordpress]
+    ports: ["80:80", "443:443"]
+    environment:
+      SHOP_HOST: ${SHOP_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  # WP-CLI, run on demand: docker-compose run --rm cli wp <command>
+  cli:
+    image: wordpress:cli-php8.3
+    profiles: [tools]
+    user: "33:33"
+    depends_on: [db]
+    environment: *wpenv
+    volumes:
+      - wp:/var/www/html
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+      - ./create-key.php:/tmp/create-key.php:ro
+
+volumes:
+  db: {}
+  wp: {}
+  caddy_data: {}
+  caddy_config: {}

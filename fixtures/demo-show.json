@@ -1,0 +1,197 @@
+{
+ "name": "Friday night drop",
+ "platforms": [
+  "facebook",
+  "instagram"
+ ],
+ "events": [
+  {
+   "t": 0,
+   "type": "lot",
+   "image": "/fixtures/img/jacket.svg",
+   "hint": {
+    "noun": "denim jacket",
+    "colors": [
+     "blue"
+    ]
+   },
+   "speech": [
+    "Okay lot one!",
+    "This is a Levi's denim trucker jacket, size M,",
+    "really good condition. Fifteen pounds."
+   ]
+  },
+  {
+   "t": 5.5,
+   "type": "publish",
+   "lot": 1
+  },
+  {
+   "t": 7,
+   "type": "comment",
+   "name": "Sarah Jones",
+   "text": "SOLD!"
+  },
+  {
+   "t": 7.3,
+   "type": "comment",
+   "name": "Mike Turner",
+   "text": "mine!!"
+  },
+  {
+   "t": 8.2,
+   "type": "comment",
+   "name": "Lou Baxter",
+   "text": "is it sold already?"
+  },
+  {
+   "t": 11,
+   "type": "lot",
+   "image": "/fixtures/img/trainers.svg",
+   "hint": {
+    "noun": "white trainers",
+    "colors": [
+     "white"
+    ]
+   },
+   "speech": [
+    "Next up, white Nike Air Max trainers.",
+    "I've got sizes 9 and 10.",
+    "Twenty five pounds."
+   ]
+  },
+  {
+   "t": 16.5,
+   "type": "publish",
+   "lot": 2
+  },
+  {
+   "t": 18,
+   "type": "comment",
+   "name": "Sarah Jones",
+   "text": "size 10 please 🙏"
+  },
+  {
+   "t": 19,
+   "type": "comment",
+   "name": "Priya Shah",
+   "text": "sold in 9!"
+  },
+  {
+   "t": 20,
+   "type": "comment",
+   "name": "dev.collects",
+   "platform": "instagram",
+   "text": "love these 😍"
+  },
+  {
+   "t": 23,
+   "type": "lot",
+   "image": "/fixtures/img/mug.svg",
+   "hint": {
+    "noun": "blue mug",
+    "colors": [
+     "blue"
+    ]
+   },
+   "speech": [
+    "Lot three is handmade blue ceramic mugs,",
+    "I've got three of these,",
+    "eight pounds each."
+   ]
+  },
+  {
+   "t": 28.5,
+   "type": "publish",
+   "lot": 3
+  },
+  {
+   "t": 29.5,
+   "type": "comment",
+   "name": "James O'Neill",
+   "text": "mine"
+  },
+  {
+   "t": 30.5,
+   "type": "comment",
+   "name": "Kate Moss-Hill",
+   "text": "sold!"
+  },
+  {
+   "t": 34,
+   "type": "lot",
+   "image": "/fixtures/img/scarf.svg",
+   "hint": {
+    "noun": "silk scarf",
+    "colors": [
+     "red",
+     "cream"
+    ]
+   },
+   "speech": [
+    "Last one tonight,",
+    "this is a vintage silk scarf, Liberty print,",
+    "twelve pounds."
+   ]
+  },
+  {
+   "t": 38.5,
+   "type": "publish",
+   "lot": 4
+  },
+  {
+   "t": 40,
+   "type": "comment",
+   "name": "tom.vintage",
+   "platform": "instagram",
+   "text": "mine"
+  },
+  {
+   "t": 40.3,
+   "type": "comment",
+   "name": "Emma Clarke",
+   "text": "sold"
+  },
+  {
+   "t": 42,
+   "type": "comment",
+   "name": "Aisha Begum",
+   "text": "I'll take the blue mug please"
+  },
+  {
+   "t": 45,
+   "type": "pay",
+   "name": "Sarah Jones"
+  },
+  {
+   "t": 46.5,
+   "type": "pay",
+   "name": "Priya Shah"
+  },
+  {
+   "t": 48,
+   "type": "pay",
+   "name": "James O'Neill"
+  },
+  {
+   "t": 49,
+   "type": "pay",
+   "name": "Kate Moss-Hill"
+  },
+  {
+   "t": 50,
+   "type": "pay",
+   "name": "Aisha Begum"
+  },
+  {
+   "t": 53,
+   "type": "advance",
+   "sec": 900
+  },
+  {
+   "t": 58,
+   "type": "pay",
+   "name": "Emma Clarke"
+  }
+ ]
+}
