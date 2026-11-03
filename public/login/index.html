@@ -40,7 +40,8 @@
       // Same-site only. Let the browser's own URL parser decide, so tricks like "//evil.example",
       // "/\evil.example" or a tab inside the slashes can't take the seller off the site.
       let to = '/dashboard/';
-      try { const u = new URL(next, location.origin); if (u.origin === location.origin) to = u.pathname + u.search + u.hash; } catch {}
+      // Go to the full checked URL, never a bare path: a path like "//evil.example" would be re-read as another host.
+      try { const u = new URL(next, location.origin); if (u.origin === location.origin) to = u.href; } catch {}
       location.href = to;
     });
   </script>
