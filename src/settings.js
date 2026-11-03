@@ -11,7 +11,7 @@ export const SECTIONS = [
   { id: 'meta', title: 'Facebook and Instagram', art: 'setup-meta', live: false, text: 'The Page LiveLot posts to, reads comments from and sends pay links from.' },
   { id: 'ai', title: 'Meta AI', art: 'ai-spark', live: true, text: 'Muse Spark, SAM 3.1, Muse Voice and Muse Image. One key for all four.' },
   { id: 'rules', title: 'Selling rules', art: 'state-held', live: true, text: 'How long buyers get to pay, and how LiveLot handles a busy show.' },
-  { id: 'server', title: 'This LiveLot', art: 'home-posts', live: false, text: 'The web address buyers and Meta use to reach LiveLot.' },
+  { id: 'server', title: 'This LiveLot', art: 'home-posts', live: false, text: 'The web address buyers and Meta use to reach LiveLot, and a pass for judges.' },
 ];
 
 // key = path inside the config object. live: false sections can't change while selling.
@@ -51,6 +51,8 @@ export const FIELDS = [
   { section: 'rules', key: 'reviewThreshold', label: 'Ask me when LiveLot is less sure than', type: 'number', unit: '%', scale: 0.01, min: 0, max: 100, advanced: true },
 
   { section: 'server', key: 'publicBaseUrl', label: 'LiveLot web address', type: 'url', placeholder: 'https://livelot.example.com', help: 'Pay links and webhooks point here. Must be reachable from the internet.' },
+  // Made by the server (POST /api/settings/judge), never typed in, so it's hidden from the form.
+  { section: 'server', key: 'judgeToken', label: 'Judge pass', type: 'secret', hidden: true },
 ];
 const BY_KEY = new Map(FIELDS.map((f) => [f.key, f]));
 
@@ -151,6 +153,8 @@ export function describeSettings(cfg, saved = {}) {
       webhook: `${cfg.publicBaseUrl}/webhooks/meta`,
       paidPing: cfg.publicBaseUrl,
     },
+    // Only sellers can read settings, so the seller can see and copy the judge link.
+    judge: cfg.judgeToken ? { on: true, link: `${cfg.publicBaseUrl}/dashboard/?token=${encodeURIComponent(cfg.judgeToken)}` } : { on: false },
   };
 }
 

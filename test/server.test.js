@@ -55,6 +55,33 @@ test('webhooks and the paid ping fail closed without their secrets', async () =>
   }
 });
 
+test('judge pass: same dashboard, no Settings, no Clear everything; a new pass replaces the old', async () => {
+  const { base, close } = await boot({ adminToken: 'tok-123', judgeToken: 'judge-abc' });
+  const as = (t) => ({ 'x-livelot-token': t, 'content-type': 'application/json' });
+  try {
+    const st = await fetch(`${base}/api/state`, { headers: as('judge-abc') });
+    assert.equal(st.status, 200);
+    assert.equal((await st.json()).role, 'judge');
+    assert.equal((await (await fetch(`${base}/api/state`, { headers: as('tok-123') })).json()).role, 'seller');
+    assert.equal((await fetch(`${base}/api/settings`, { headers: as('judge-abc') })).status, 403);
+    assert.equal((await fetch(`${base}/api/settings/judge`, { method: 'POST', headers: as('judge-abc'), body: '{}' })).status, 403);
+    assert.equal((await fetch(`${base}/api/show/reset`, { method: 'POST', headers: as('judge-abc') })).status, 403);
+    assert.equal((await fetch(`${base}/api/comment`, { method: 'POST', headers: as('judge-abc'), body: '{"text":"sold"}' })).status, 200);
+    // the seller makes a new pass: the old one stops working, the new one works
+    const made = await (await fetch(`${base}/api/settings/judge`, { method: 'POST', headers: as('tok-123'), body: '{"on":true}' })).json();
+    assert.equal(made.settings.judge.on, true);
+    const fresh = new URL(made.settings.judge.link).searchParams.get('token');
+    assert.match(fresh, /^judge-/);
+    assert.equal((await fetch(`${base}/api/state`, { headers: as('judge-abc') })).status, 401);
+    assert.equal((await fetch(`${base}/api/state`, { headers: as(fresh) })).status, 200);
+    // and can turn it off
+    await fetch(`${base}/api/settings/judge`, { method: 'POST', headers: as('tok-123'), body: '{"on":false}' });
+    assert.equal((await fetch(`${base}/api/state`, { headers: as(fresh) })).status, 401);
+  } finally {
+    await close();
+  }
+});
+
 test('no token configured means open (local dev)', async () => {
   const { base, close } = await boot({ adminToken: '' });
   try {

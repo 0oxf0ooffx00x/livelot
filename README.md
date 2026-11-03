@@ -113,6 +113,8 @@ Open **Demo tools → Play the demo show** on the dashboard to watch a full show
 
 The easy way: open **Settings** in the dashboard (top right). It has a card each for your WooCommerce shop, your Facebook Page and Instagram, Meta AI, selling rules and LiveLot's web address. Each card has a **Test connection** button, and changes work straight away without a restart. Keys are write-only: the screen only ever shows their last 4 characters. Saved settings go to `SETTINGS_FILE` (default `data/settings.json`) and override the env vars below; shop and Facebook settings can't change while you're selling.
 
+**Judge pass:** Settings → This LiveLot → **Make a judge pass** gives you a sign-in link for judges or guests. It opens the same live dashboard, shop, Page and Meta AI, but can't open Settings or clear your items. Making a new pass, or turning it off, signs the old one out at once.
+
 Or with env vars: copy `.env.example` to `.env`, then:
 
 1. **Meta app** (Business type, dev mode) with Messenger, Instagram and Webhooks. Set `META_APP_SECRET`, `FB_PAGE_ID`, `FB_PAGE_TOKEN` and `IG_USER_ID`. Add your demo buyers as Testers.

@@ -170,8 +170,13 @@ export function createMetaPlatform({ cfg, trace, log, fetchImpl = fetch }) {
     return { attachment: { type: 'template', payload: { template_type: 'button', text: text.slice(0, 640), buttons: [{ type: 'web_url', url, title: title.slice(0, 20) }] } } };
   }
 
+  // "Pretend to be a buyer" comments typed on the dashboard have made-up IDs Facebook has never seen:
+  // the order and pay link are real, only the Messenger/Instagram message is skipped.
+  const pretend = (commentId) => String(commentId).startsWith('sim_');
+
   // One private reply per comment (FB: within 7 days; IG Live: only while the broadcast is live).
   async function privateReply({ platform, commentId, text, url, buttonTitle = 'Pay now' }) {
+    if (pretend(commentId)) return { ok: true, recipientId: null, note: 'pretend buyer: not sent to Messenger' };
     if (platform === 'instagram') {
       const message = { text: url ? `${text}\n${url}` : text };
       try {
@@ -199,6 +204,7 @@ export function createMetaPlatform({ cfg, trace, log, fetchImpl = fetch }) {
   }
 
   async function publicReply({ platform, commentId, text }) {
+    if (pretend(commentId)) return { ok: true, note: 'pretend buyer: not posted' };
     if (platform === 'instagram') {
       await graph.post(`/${commentId}/replies`, { token: m.igToken, params: { message: text }, purpose: 'IG public reply' });
     } else {

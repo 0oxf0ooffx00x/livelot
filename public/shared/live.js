@@ -46,6 +46,7 @@ export function connect(onChange) {
       // A new deploy: this page's code may be older than the server's. Tell the page once.
       if (state.build && d.build && d.build !== state.build) state.outdated = true;
       state.build = d.build || state.build;
+      state.role = d.role || 'seller'; // 'judge' with a judge pass: no Settings, no Clear everything
       state.show = d.show; state.config = d.config || {}; state.stats = d.stats || {}; state.ai = d.ai || {};
       state.platform = d.platform || {}; state.commerce = d.commerce; state.replay = d.replay || {};
       state.offset = d.now - Date.now();

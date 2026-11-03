@@ -59,6 +59,7 @@ function sectionHtml(sec) {
       ${infoHtml(sec.id)}
       ${adv.length ? `<details class="more"><summary>More options</summary><div class="fields">${adv.map(fieldHtml).join('')}</div></details>` : ''}
     </form>
+    ${sec.id === 'server' ? judgeHtml() : ''}
     <div class="sec-actions">
       ${locked ? '<p class="hint">Press <b>Stop selling</b> on the dashboard to change these.</p>' : `
       <button class="bb primary" data-save="${sec.id}">${art('step-publish')}<span>Save</span></button>
@@ -121,6 +122,29 @@ function infoHtml(section) {
       <span><code>define('LIVELOT_SECRET', '…');</code> with the <b>Payment notice secret</b> from “More options” below.</span></div>`;
   }
   return '';
+}
+
+/** A second key for judges: the same live dashboard, minus Settings and Clear everything. Works mid-show. */
+function judgeHtml() {
+  const j = data.settings.judge || {};
+  const copy = (text) => `<span class="copy"><code>${esc(text)}</code><button type="button" data-copy="${esc(text)}">Copy</button></span>`;
+  return `<div class="info judge"><b>Judge pass</b>
+    <span>A separate key for hackathon judges, or anyone you want to show LiveLot to. It opens this same dashboard with your real shop, Page and Meta AI, so they can try everything. It can’t open Settings or clear your items, and you can turn it off at any time.</span>
+    ${j.on ? `<span>Send them this link. It signs them straight in: ${copy(j.link)}</span>` : ''}
+    <div class="bb-row"><button type="button" class="bb small" data-judge="new"><span>${j.on ? 'Make a new pass (the old one stops working)' : 'Make a judge pass'}</span></button>
+      ${j.on ? '<button type="button" class="bb small danger" data-judge="off"><span>Turn it off</span></button>' : ''}</div></div>`;
+}
+
+async function judge(on) {
+  result('server', 'busy', on ? 'Making a judge pass…' : 'Turning the judge pass off…');
+  try {
+    const r = await api('/api/settings/judge', { on });
+    data.settings = r.settings;
+    renderAll();
+    result('server', r.warning ? 'bad' : 'ok', esc(r.warning || (on ? 'Judge pass ready. Copy the link above.' : 'Judge pass turned off. Anyone using it is signed out.')));
+  } catch (err) {
+    result('server', 'bad', `${art('vision-miss')}<span>${esc(err.message)}</span>`);
+  }
 }
 
 /** Which Page (and Instagram account) LiveLot sells through, with Switch and Disconnect. */
@@ -250,9 +274,10 @@ async function connect(pageId = null) {
 }
 
 document.addEventListener('click', async (e) => {
-  const b = e.target.closest('[data-save], [data-test], [data-remove], [data-copy], [data-connect], [data-page], [data-livetest], [data-switch], [data-disconnect]');
+  const b = e.target.closest('[data-save], [data-test], [data-remove], [data-copy], [data-connect], [data-page], [data-livetest], [data-switch], [data-disconnect], [data-judge]');
   if (!b) return;
   e.preventDefault();
+  if (b.dataset.judge) { judge(b.dataset.judge === 'new'); return; }
   if (b.hasAttribute('data-switch')) {
     const more = $('#connectMore');
     if (more) { more.open = true; more.scrollIntoView({ block: 'start', behavior: 'smooth' }); setTimeout(() => $('#connectToken')?.focus(), 300); }

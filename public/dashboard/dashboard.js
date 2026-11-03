@@ -83,10 +83,12 @@ function renderTop() {
   ].map(([c, a, v, l]) => `<div class="stat ${c}">${art(a)}<span><b>${esc(v)}</b><span>${l}</span></span></div>`).join('') : '';
 
   const dev = S.config.devTools;
-  const actionsKey = `${live}:${dev}:${S.config.claimTtlSec}:${show?.demo}`;
+  const judge = S.role === 'judge';
+  const actionsKey = `${live}:${dev}:${S.config.claimTtlSec}:${show?.demo}:${judge}`;
   if (actionsKey !== lastActionsKey) {
     lastActionsKey = actionsKey;
-    $('#actions').innerHTML = `${live ? `<button class="bb small" data-act="end">${art('btn-stop')}<span>${show?.demo ? 'Stop the demo' : 'Stop selling'}</span></button>` : ''}<a class="bb small" href="/settings/"><span>Settings</span></a>${dev ? menuHtml() : ''}`;
+    const settings = judge ? '<span class="pill-demo" title="You can use everything here except Settings">Judge pass</span>' : '<a class="bb small" href="/settings/"><span>Settings</span></a>';
+    $('#actions').innerHTML = `${live ? `<button class="bb small" data-act="end">${art('btn-stop')}<span>${show?.demo ? 'Stop the demo' : 'Stop selling'}</span></button>` : ''}${settings}${dev ? menuHtml() : ''}`;
   }
   const tester = $('#tester');
   tester.hidden = !(dev && live);
@@ -106,7 +108,7 @@ function menuHtml() {
       ${item('recap', 'home-recap', 'Show recap', 'A summary card to share')}
       ${item('overlay', 'menu-overlay', 'Stream overlay', 'For OBS when you go live')}
       ${item('studio', 'btn-camera', 'Separate camera page', 'For a second screen or OBS')}
-      ${item('reset', 'btn-remove', 'Clear everything', 'Stops selling and deletes all items, comments and orders here')}
+      ${S.role === 'judge' ? '' : item('reset', 'btn-remove', 'Clear everything', 'Stops selling and deletes all items, comments and orders here')}
     </div></div>`;
 }
 
@@ -121,10 +123,14 @@ function renderStart() {
   const ai = Object.values(S.ai || {}).filter(Boolean);
   const meta = S.platform?.kind === 'meta';
   const woo = S.commerce === 'woo';
-  const key = `${ai.join()}:${meta}:${woo}:${S.config.shopName}:${S.config.pageName}`;
+  const judge = S.role === 'judge';
+  const key = `${ai.join()}:${meta}:${woo}:${S.config.shopName}:${S.config.pageName}:${judge}`;
   if (key === lastSetupKey) return;
   lastSetupKey = key;
-  const row = (a, title, ok, state, text, section) => `<a class="setup-item" href="/settings/#${section}">${art(a)}<b>${title}</b><span class="state ${ok ? 'ok' : 'off'}">${state}</span><p>${text}</p><span class="setup-go">${ok ? 'Change' : 'Set up'}</span></a>`;
+  // With a judge pass the cards only show what's connected; Settings stays with the seller.
+  const row = (a, title, ok, state, text, section) => judge
+    ? `<div class="setup-item">${art(a)}<b>${title}</b><span class="state ${ok ? 'ok' : 'off'}">${state}</span><p>${text}</p></div>`
+    : `<a class="setup-item" href="/settings/#${section}">${art(a)}<b>${title}</b><span class="state ${ok ? 'ok' : 'off'}">${state}</span><p>${text}</p><span class="setup-go">${ok ? 'Change' : 'Set up'}</span></a>`;
   $('#setup').innerHTML = [
     row('setup-shop', 'Your shop', woo, woo ? 'Connected' : 'Practice shop',
       woo ? `Products and orders go to ${esc(S.config.shopName || 'your shop')} on WooCommerce.` : 'Orders stay inside LiveLot until you add your WooCommerce store.', 'shop'),

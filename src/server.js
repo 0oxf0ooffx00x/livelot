@@ -31,9 +31,19 @@ export function createServer(cfg = loadConfig(), inject = {}) {
     const b = crypto.createHash('sha256').update(String(want)).digest();
     return crypto.timingSafeEqual(a, b);
   };
+  // The judge pass (made in Settings) opens the same live setup but can't touch Settings or clear the
+  // seller's items, so judges can try everything without being able to break it for the next judge.
+  const JUDGE_BLOCKED = [/^\/api\/settings/, /^\/api\/show\/reset$/];
   http.use((req, res, next) => {
+    req.role = 'seller';
     if (!cfg.adminToken || !req.path.startsWith('/api/') || PUBLIC_API.some((r) => r.test(req.path))) return next();
-    if (sameSecret(req.get('x-livelot-token') || req.query.token, cfg.adminToken)) return next();
+    const got = req.get('x-livelot-token') || req.query.token;
+    if (sameSecret(got, cfg.adminToken)) return next();
+    if (cfg.judgeToken && sameSecret(got, cfg.judgeToken)) {
+      req.role = 'judge';
+      if (JUDGE_BLOCKED.some((r) => r.test(req.path))) return res.status(403).json({ ok: false, error: 'The judge pass opens everything except Settings and Clear everything.', judge: true });
+      return next();
+    }
     res.status(401).json({ ok: false, error: 'Seller token required', auth: true });
   });
 
@@ -102,12 +112,12 @@ export function createServer(cfg = loadConfig(), inject = {}) {
 
   // ---- state + live feed
   http.get('/health', (req, res) => ok(res, { show: store.s.show?.status || 'none', ...describeConfig(cfg) }));
-  http.get('/api/state', (req, res) => res.json({ ...app.snapshot(), config: describeConfig(cfg), replay: replay.status(), build: BUILD }));
+  http.get('/api/state', (req, res) => res.json({ ...app.snapshot(), config: describeConfig(cfg), replay: replay.status(), build: BUILD, role: req.role }));
   http.get('/api/events', (req, res) => {
     res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
     res.flushHeaders();
     const send = (type, data) => res.write(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`);
-    send('snapshot', { ...app.snapshot(), config: describeConfig(cfg), replay: replay.status(), build: BUILD });
+    send('snapshot', { ...app.snapshot(), config: describeConfig(cfg), replay: replay.status(), build: BUILD, role: req.role });
     const off = bus.on((evt) => send(evt.type, evt.data));
     let statsDue = false;
     const offStats = bus.on((evt) => { if (evt.type.startsWith('claim') || evt.type.startsWith('order') || evt.type.startsWith('lot')) statsDue = true; });
@@ -173,6 +183,14 @@ export function createServer(cfg = loadConfig(), inject = {}) {
     return { settings: describeSettings(cfg, await readSaved(cfg)), warning };
   }));
   http.post('/api/settings/test', wrap(async (req) => ({ result: await app.checkSection(String(req.body?.section || '')) })));
+  // Judge pass on/off. A new pass replaces the old one at once (anyone still using the old one is signed out).
+  http.post('/api/settings/judge', wrap(async (req) => {
+    const values = { judgeToken: req.body?.on === false ? '' : `judge-${crypto.randomBytes(18).toString('base64url')}` };
+    applySettings(cfg, values);
+    let warning = '';
+    try { await saveSettings(cfg, values); } catch (err) { warning = `Working now, but couldn’t be stored for next time: ${err.message}`; }
+    return { settings: describeSettings(cfg, await readSaved(cfg)), warning };
+  }));
   // Can this Page go live through the API (Facebook hides the Go live button on Pages under 100
   // followers)? Creates an unpublished test broadcast that nobody sees, then deletes it.
   http.post('/api/settings/meta/live-test', wrap(async () => {

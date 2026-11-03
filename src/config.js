@@ -28,6 +28,8 @@ export function loadConfig(overrides = {}) {
     devTools: bool(env.DEV_TOOLS, true),
     // When set, every seller-side /api route needs it (header x-livelot-token or ?token=). Required on any public URL.
     adminToken: env.ADMIN_TOKEN || '',
+    // Optional second key (made in Settings): everything a seller can do except Settings and "Clear everything".
+    judgeToken: env.JUDGE_TOKEN || '',
 
     platformMode: env.PLATFORM || (env.FB_PAGE_TOKEN ? 'meta' : 'mock'),
     commerceMode: env.COMMERCE || (env.WOO_URL ? 'woo' : 'mock'),

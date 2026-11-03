@@ -23,9 +23,9 @@
 <body>
   <form id="f">
     <span class="art xxl" style="--art:url(/art/signin.webp)" aria-hidden="true"></span>
-    <h1>Seller sign in</h1>
-    <p>Enter the seller token (ADMIN_TOKEN) for this LiveLot server.</p>
-    <input name="t" type="password" autocomplete="current-password" aria-label="Seller token" required autofocus />
+    <h1>Sign in</h1>
+    <p>Enter your seller token (ADMIN_TOKEN), or the judge pass you were given.</p>
+    <input name="t" type="password" autocomplete="current-password" aria-label="Seller token or judge pass" required autofocus />
     <button type="submit">Open the control room</button>
     <span class="err" id="err" role="alert"></span>
   </form>
@@ -35,7 +35,7 @@
       e.preventDefault();
       const t = e.target.t.value.trim();
       const r = await fetch('/api/state', { headers: { 'x-livelot-token': t } });
-      if (r.status === 401) { document.getElementById('err').textContent = 'That token is not right for this server.'; return; }
+      if (r.status === 401) { document.getElementById('err').textContent = 'That token or pass is not right for this server.'; return; }
       try { localStorage.setItem('livelot-token', t); } catch {}
       // Same-site only. Let the browser's own URL parser decide, so tricks like "//evil.example",
       // "/\evil.example" or a tab inside the slashes can't take the seller off the site.
