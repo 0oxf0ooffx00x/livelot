@@ -154,7 +154,8 @@ export function describeSettings(cfg, saved = {}) {
       paidPing: cfg.publicBaseUrl,
     },
     // Only sellers can read settings, so the seller can see and copy the judge link.
-    judge: cfg.judgeToken ? { on: true, link: `${cfg.publicBaseUrl}/dashboard/?token=${encodeURIComponent(cfg.judgeToken)}` } : { on: false },
+    // The pass rides after "#": browsers never send that part to a server, a log or a Referer.
+    judge: cfg.judgeToken ? { on: true, link: `${cfg.publicBaseUrl}/dashboard/#token=${encodeURIComponent(cfg.judgeToken)}` } : { on: false },
   };
 }
 

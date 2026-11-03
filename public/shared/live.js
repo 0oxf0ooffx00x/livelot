@@ -1,17 +1,18 @@
 // Live state client shared by the dashboard, overlay and studio. One SSE stream, one state object.
 
-// Seller token: arrives once as ?token=..., then lives in localStorage (OBS keeps it in the URL).
+// Seller token or judge pass: arrives once as #token=... (judge links: never sent to the server) or
+// ?token=... (OBS keeps that one in the URL), then lives in localStorage.
 let memToken = '';
 (() => {
   const params = new URLSearchParams(location.search);
-  const t = params.get('token');
+  const hash = new URLSearchParams(location.hash.slice(1));
+  const t = hash.get('token') || params.get('token');
   if (!t) return;
   memToken = t;
   try { localStorage.setItem('livelot-token', t); } catch { /* private mode: keep it in memory */ }
-  if (!window.obsstudio) {
-    params.delete('token');
-    history.replaceState(null, '', location.pathname + (params.toString() ? `?${params}` : '') + location.hash);
-  }
+  hash.delete('token');
+  if (!window.obsstudio) params.delete('token');
+  history.replaceState(null, '', location.pathname + (params.toString() ? `?${params}` : '') + (hash.toString() ? `#${hash}` : ''));
 })();
 export function token() {
   try { return localStorage.getItem('livelot-token') || memToken; } catch { return memToken; }

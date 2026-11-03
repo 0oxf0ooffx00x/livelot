@@ -20,6 +20,10 @@ export function createServer(cfg = loadConfig(), inject = {}) {
   const http = express();
   http.disable('x-powered-by');
   http.set('trust proxy', true);
+  // Express matches routes case-insensitively by default, so "/API/state" would reach "/api/state"
+  // while slipping past a lowercase path check. Make routing exact, and check paths lowercased below.
+  http.set('case sensitive routing', true);
+  http.use((req, res, next) => { res.set('Referrer-Policy', 'same-origin'); next(); });
 
   // Seller token gate. Buyer-facing routes stay open: pay links (/p, /pay), the test checkout,
   // signed webhooks and the Woo paid ping (which has its own secret).
@@ -33,19 +37,23 @@ export function createServer(cfg = loadConfig(), inject = {}) {
   };
   // The judge pass (made in Settings) opens the same live setup but can't touch Settings or clear the
   // seller's items, so judges can try everything without being able to break it for the next judge.
-  const JUDGE_BLOCKED = [/^\/api\/settings/, /^\/api\/show\/reset$/];
+  // The routes themselves also carry sellerOnly, so the check can't be dodged by spelling a path differently.
+  const JUDGE_BLOCKED = [/^\/api\/settings(\/|$)/, /^\/api\/show\/reset\/?$/];
+  const JUDGE_NO = { ok: false, error: 'The judge pass opens everything except Settings and Clear everything.', judge: true };
   http.use((req, res, next) => {
     req.role = 'seller';
-    if (!cfg.adminToken || !req.path.startsWith('/api/') || PUBLIC_API.some((r) => r.test(req.path))) return next();
+    const p = req.path.toLowerCase();
+    if (!cfg.adminToken || !p.startsWith('/api/') || PUBLIC_API.some((r) => r.test(p))) return next();
     const got = req.get('x-livelot-token') || req.query.token;
     if (sameSecret(got, cfg.adminToken)) return next();
     if (cfg.judgeToken && sameSecret(got, cfg.judgeToken)) {
       req.role = 'judge';
-      if (JUDGE_BLOCKED.some((r) => r.test(req.path))) return res.status(403).json({ ok: false, error: 'The judge pass opens everything except Settings and Clear everything.', judge: true });
+      if (JUDGE_BLOCKED.some((r) => r.test(p))) return res.status(403).json(JUDGE_NO);
       return next();
     }
     res.status(401).json({ ok: false, error: 'Seller token required', auth: true });
   });
+  const sellerOnly = (req, res, next) => (req.role === 'seller' ? next() : res.status(403).json(JUDGE_NO));
 
   const ok = (res, data = {}) => res.json({ ok: true, ...data });
   const wrap = (fn) => async (req, res) => {
@@ -113,9 +121,14 @@ export function createServer(cfg = loadConfig(), inject = {}) {
   // ---- state + live feed
   http.get('/health', (req, res) => ok(res, { show: store.s.show?.status || 'none', ...describeConfig(cfg) }));
   http.get('/api/state', (req, res) => res.json({ ...app.snapshot(), config: describeConfig(cfg), replay: replay.status(), build: BUILD, role: req.role }));
+  // Open live feeds and who opened them, so turning off a judge pass also cuts the feeds it opened.
+  const feeds = new Set();
   http.get('/api/events', (req, res) => {
     res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
     res.flushHeaders();
+    const feed = { role: req.role, res };
+    feeds.add(feed);
+    req.on('close', () => feeds.delete(feed));
     const send = (type, data) => res.write(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`);
     send('snapshot', { ...app.snapshot(), config: describeConfig(cfg), replay: replay.status(), build: BUILD, role: req.role });
     const off = bus.on((evt) => send(evt.type, evt.data));
@@ -133,7 +146,7 @@ export function createServer(cfg = loadConfig(), inject = {}) {
     return { show: await app.startShow({ platforms: b.platforms || ['facebook', 'instagram'], fbLiveVideoId: id(b.fbLiveVideoId), mode: b.mode, fbPostId: id(b.fbPostId), igMediaId: id(b.igMediaId), useLatestPosts: b.useLatestPosts === true }) };
   }));
   http.post('/api/show/end', wrap(async () => ({ show: app.endShow() })));
-  http.post('/api/show/reset', wrap(async () => {
+  http.post('/api/show/reset', sellerOnly, wrap(async () => {
     replay.stop();
     app.endShow();
     store.reset();
@@ -143,7 +156,7 @@ export function createServer(cfg = loadConfig(), inject = {}) {
   http.get('/api/check', wrap(async () => app.check ? app.check() : {}));
 
   // ---- settings (seller token required, like every /api route)
-  http.get('/api/settings', wrap(async () => {
+  http.get('/api/settings', sellerOnly, wrap(async () => {
     if (cfg.meta.pageId && cfg.meta.pageToken && !cfg.meta.pageName) {
       // Connected before names were remembered: ask Facebook once and keep it.
       try {
@@ -163,7 +176,7 @@ export function createServer(cfg = loadConfig(), inject = {}) {
     return { settings: describeSettings(cfg, await readSaved(cfg)), selling: store.s.show?.status === 'live' };
   }));
   // Forget the Page (the app ID and secret stay, so reconnecting is one token away).
-  http.post('/api/settings/meta/disconnect', wrap(async () => {
+  http.post('/api/settings/meta/disconnect', sellerOnly, wrap(async () => {
     const { pageId, pageToken, graphVersion } = cfg.meta;
     const values = { 'meta.pageId': '', 'meta.pageToken': '', 'meta.pageName': '', 'meta.igUserId': '', 'meta.igUsername': '' };
     app.reconfigure(values); // refuses while selling
@@ -175,25 +188,27 @@ export function createServer(cfg = loadConfig(), inject = {}) {
     try { await saveSettings(cfg, values); } catch (err) { warning = `Disconnected now, but couldn’t be stored for next time: ${err.message}`; }
     return { settings: describeSettings(cfg, await readSaved(cfg)), warning };
   }));
-  http.post('/api/settings', wrap(async (req) => {
+  http.post('/api/settings', sellerOnly, wrap(async (req) => {
     const values = normalize(req.body?.values);
     app.reconfigure(values);
     let warning = '';
     try { await saveSettings(cfg, values); } catch (err) { warning = `Working now, but couldn’t be stored for next time: ${err.message}`; }
     return { settings: describeSettings(cfg, await readSaved(cfg)), warning };
   }));
-  http.post('/api/settings/test', wrap(async (req) => ({ result: await app.checkSection(String(req.body?.section || '')) })));
+  http.post('/api/settings/test', sellerOnly, wrap(async (req) => ({ result: await app.checkSection(String(req.body?.section || '')) })));
   // Judge pass on/off. A new pass replaces the old one at once (anyone still using the old one is signed out).
-  http.post('/api/settings/judge', wrap(async (req) => {
+  http.post('/api/settings/judge', sellerOnly, wrap(async (req) => {
     const values = { judgeToken: req.body?.on === false ? '' : `judge-${crypto.randomBytes(18).toString('base64url')}` };
     applySettings(cfg, values);
+    // The old pass is dead: close the live feeds it opened (their reconnect gets a 401 and a sign-in page).
+    for (const f of feeds) if (f.role === 'judge') { f.res.end(); feeds.delete(f); }
     let warning = '';
     try { await saveSettings(cfg, values); } catch (err) { warning = `Working now, but couldn’t be stored for next time: ${err.message}`; }
     return { settings: describeSettings(cfg, await readSaved(cfg)), warning };
   }));
   // Can this Page go live through the API (Facebook hides the Go live button on Pages under 100
   // followers)? Creates an unpublished test broadcast that nobody sees, then deletes it.
-  http.post('/api/settings/meta/live-test', wrap(async () => {
+  http.post('/api/settings/meta/live-test', sellerOnly, wrap(async () => {
     const { pageId, pageToken, graphVersion, appId, appSecret } = cfg.meta;
     if (!pageId || !pageToken) throw Object.assign(new Error('Connect your Page first'), { status: 400 });
     const g = `https://graph.facebook.com/${graphVersion}`;
@@ -216,7 +231,7 @@ export function createServer(cfg = loadConfig(), inject = {}) {
     return { result: { ok: true, detail: 'Yes. Facebook let LiveLot create a live video on this Page, so you can stream to it from OBS even without the Go live button. (The test broadcast was deleted.)', scopes } };
   }));
   // One token from Graph API Explorer -> Page ID, a Page token that doesn't expire, and Instagram.
-  http.post('/api/settings/meta/connect', wrap(async (req) => {
+  http.post('/api/settings/meta/connect', sellerOnly, wrap(async (req) => {
     const b = req.body || {};
     const appId = String(b.appId || cfg.meta.appId || '').trim();
     const appSecret = String(b.appSecret || cfg.meta.appSecret || '').trim();
@@ -264,7 +279,9 @@ export function createServer(cfg = loadConfig(), inject = {}) {
     const platform = b.platform === 'instagram' ? 'instagram' : 'facebook';
     const name = b.name || 'Viewer';
     const claim = await claims.handleComment({
-      id: b.id || `sim_${Date.now()}_${++injected}`,
+      // Always our own pretend ID, never one from the browser: the Meta adapter skips Messenger for
+      // sim_ IDs, and a real comment ID here would make the Page message a real person.
+      id: `sim_${Date.now()}_${++injected}`,
       platform,
       from: { id: b.userId || name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name: platform === 'instagram' && !name.startsWith('@') ? `@${name}` : name },
       text: b.text,

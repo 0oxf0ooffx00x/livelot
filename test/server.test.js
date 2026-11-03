@@ -20,6 +20,9 @@ test('seller token gates seller routes but not buyer routes', async () => {
     assert.equal((await fetch(`${base}/api/state`, { headers: { 'x-livelot-token': 'nope' } })).status, 401);
     assert.equal((await fetch(`${base}/api/state`, { headers: { 'x-livelot-token': 'tok-123' } })).status, 200);
     assert.equal((await fetch(`${base}/api/state?token=tok-123`)).status, 200);
+    // capitalised paths must not dodge the sign-in
+    for (const p of ['/API/state', '/Api/settings', '/api/State']) assert.notEqual((await fetch(`${base}${p}`)).status, 200, p);
+    assert.notEqual((await fetch(`${base}/API/show/reset`, { method: 'POST' })).status, 200);
     assert.equal((await fetch(`${base}/api/show/reset`, { method: 'POST' })).status, 401);
     assert.equal((await fetch(`${base}/api/comment`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"text":"sold"}' })).status, 401);
     // buyer-facing and signed routes stay reachable
@@ -67,10 +70,30 @@ test('judge pass: same dashboard, no Settings, no Clear everything; a new pass r
     assert.equal((await fetch(`${base}/api/settings/judge`, { method: 'POST', headers: as('judge-abc'), body: '{}' })).status, 403);
     assert.equal((await fetch(`${base}/api/show/reset`, { method: 'POST', headers: as('judge-abc') })).status, 403);
     assert.equal((await fetch(`${base}/api/comment`, { method: 'POST', headers: as('judge-abc'), body: '{"text":"sold"}' })).status, 200);
+    // other spellings of the blocked paths don't get a judge through either
+    for (const p of ['/api/Settings', '/API/settings/judge', '/api/settings/', '/api/show/reset/', '/api/SHOW/reset']) {
+      const r = await fetch(`${base}${p}`, { method: 'POST', headers: as('judge-abc'), body: '{"on":true}' });
+      assert.ok(r.status === 403 || r.status === 404, `${p} gave ${r.status}`);
+    }
+    // a comment ID sent from the browser is ignored: pretend buyers always get our own sim_ ID
+    assert.equal((await fetch(`${base}/api/show/start`, { method: 'POST', headers: as('judge-abc'), body: '{"mode":"post"}' })).status, 200);
+    await fetch(`${base}/api/comment`, { method: 'POST', headers: as('judge-abc'), body: '{"text":"mine"}' });
+    await fetch(`${base}/api/comment`, { method: 'POST', headers: as('judge-abc'), body: '{"text":"sold","id":"1383851404815782_999"}' });
+    const ids = (await (await fetch(`${base}/api/state`, { headers: as('tok-123') })).json()).comments.map((c) => c.id);
+    assert.ok(ids.length >= 2 && ids.every((id) => id.startsWith('sim_')), `comment ids: ${ids}`);
+    // a live feed opened with the judge pass...
+    const ctl = new AbortController();
+    const reader = (await fetch(`${base}/api/events?token=judge-abc`, { signal: ctl.signal })).body.getReader();
+    await reader.read();
     // the seller makes a new pass: the old one stops working, the new one works
     const made = await (await fetch(`${base}/api/settings/judge`, { method: 'POST', headers: as('tok-123'), body: '{"on":true}' })).json();
+    // ...is closed straight away
+    const ended = await Promise.race([(async () => { for (;;) if ((await reader.read()).done) return true; })(), new Promise((r) => setTimeout(() => r(false), 2000))]);
+    ctl.abort();
+    assert.equal(ended, true, 'the old pass’s live feed should close');
     assert.equal(made.settings.judge.on, true);
-    const fresh = new URL(made.settings.judge.link).searchParams.get('token');
+    assert.ok(!made.settings.judge.link.includes('?token='), 'pass must not be in the query string');
+    const fresh = new URLSearchParams(new URL(made.settings.judge.link).hash.slice(1)).get('token');
     assert.match(fresh, /^judge-/);
     assert.equal((await fetch(`${base}/api/state`, { headers: as('judge-abc') })).status, 401);
     assert.equal((await fetch(`${base}/api/state`, { headers: as(fresh) })).status, 200);
