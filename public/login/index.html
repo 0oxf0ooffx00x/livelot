@@ -37,8 +37,11 @@
       const r = await fetch('/api/state', { headers: { 'x-livelot-token': t } });
       if (r.status === 401) { document.getElementById('err').textContent = 'That token is not right for this server.'; return; }
       try { localStorage.setItem('livelot-token', t); } catch {}
-      // Same-site paths only: "//evil.example" or "/\evil.example" would leave the site.
-      location.href = /^\/(?![\/\\])/.test(next) ? next : '/dashboard/';
+      // Same-site only. Let the browser's own URL parser decide, so tricks like "//evil.example",
+      // "/\evil.example" or a tab inside the slashes can't take the seller off the site.
+      let to = '/dashboard/';
+      try { const u = new URL(next, location.origin); if (u.origin === location.origin) to = u.pathname + u.search + u.hash; } catch {}
+      location.href = to;
     });
   </script>
 </body>
