@@ -78,9 +78,12 @@ test('judge pass: same dashboard, no Settings, no Clear everything; a new pass r
     // a comment ID sent from the browser is ignored: pretend buyers always get our own sim_ ID
     assert.equal((await fetch(`${base}/api/show/start`, { method: 'POST', headers: as('judge-abc'), body: '{"mode":"post"}' })).status, 200);
     await fetch(`${base}/api/comment`, { method: 'POST', headers: as('judge-abc'), body: '{"text":"mine"}' });
-    await fetch(`${base}/api/comment`, { method: 'POST', headers: as('judge-abc'), body: '{"text":"sold","id":"1383851404815782_999"}' });
-    const ids = (await (await fetch(`${base}/api/state`, { headers: as('tok-123') })).json()).comments.map((c) => c.id);
-    assert.ok(ids.length >= 2 && ids.every((id) => id.startsWith('sim_')), `comment ids: ${ids}`);
+    await fetch(`${base}/api/comment`, { method: 'POST', headers: as('judge-abc'), body: '{"text":"sold","id":"1383851404815782_999","userId":"24680","name":"Real Buyer"}' });
+    const seen = (await (await fetch(`${base}/api/state`, { headers: as('tok-123') })).json()).comments;
+    assert.ok(seen.length >= 2 && seen.every((c) => c.id.startsWith('sim_')), `comment ids: ${seen.map((c) => c.id)}`);
+    // ...and so is a buyer ID: pretend buyers can't be merged into a real buyer
+    const buyerIds = seen.map((c) => c.from?.id ?? c.buyerId ?? c.userId).filter(Boolean);
+    assert.ok(buyerIds.length >= 2 && buyerIds.every((id) => String(id).startsWith('sim-')), `buyer ids: ${buyerIds}`);
     // a live feed opened with the judge pass...
     const ctl = new AbortController();
     const reader = (await fetch(`${base}/api/events?token=judge-abc`, { signal: ctl.signal })).body.getReader();

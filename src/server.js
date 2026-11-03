@@ -283,7 +283,9 @@ export function createServer(cfg = loadConfig(), inject = {}) {
       // sim_ IDs, and a real comment ID here would make the Page message a real person.
       id: `sim_${Date.now()}_${++injected}`,
       platform,
-      from: { id: b.userId || name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name: platform === 'instagram' && !name.startsWith('@') ? `@${name}` : name },
+      // Pretend buyers get their own sim- IDs, never one from the browser: a real buyer's ID would
+      // merge this claim into their order and could message them on Messenger.
+      from: { id: `sim-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`, name: platform === 'instagram' && !name.startsWith('@') ? `@${name}` : name },
       text: b.text,
       at: app.clock.now(),
       viewerLagSec: b.viewerLagSec ?? 0,
