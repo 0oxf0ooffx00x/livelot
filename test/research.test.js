@@ -6,6 +6,34 @@ import { descriptionHtml, shortText } from '../src/adapters/woo/client.js';
 process.env.VISION_WINDOW_MS = '0';
 const until = async (fn, ms = 3000) => { const t0 = Date.now(); while (!fn()) { if (Date.now() - t0 > ms) throw new Error('timed out'); await new Promise((r) => setTimeout(r, 10)); } };
 
+test('both listeners count: words only the captions caught still reach the listing and the web search', async () => {
+  const toListing = [];
+  const toResearch = [];
+  const spark = {
+    name: 'muse-spark-1.3',
+    listing: async (ctx) => { toListing.push(ctx.transcript); return { json: { title: 'Headphones', description: 'Headphones.', price: null, variants: [], quantity: 1, confidence: 0.8 }, ms: 5 }; },
+    research: async (ctx) => { toResearch.push(ctx.transcript); return { json: { product: 'Headphones', brand: 'Sony|null', title: 'Headphones', description: 'Headphones.', confidence: 0.5 }, ms: 5, searches: [] }; },
+  };
+  const { app } = await makeApp({}, { ai: { spark } });
+  const lot = app.lots.nextLot();
+  // Muse Voice lost "Sony" and the number at a chunk join; the browser captions caught both (real test, 4 Nov)
+  app.lots.onSpeech({ text: "so today we're selling this.. headphones um", source: 'muse-asr' });
+  app.lots.onSpeech({ text: 'for um pounds', source: 'muse-asr' });
+  app.lots.onSpeech({ text: "so today we're selling these Sony headphones", source: 'webspeech' });
+  app.lots.onSpeech({ text: '£5', source: 'webspeech' });
+  await until(() => lot.researchStage === 'done' && lot.price !== null);
+  assert.match(toListing.at(-1), /Sony/);
+  assert.match(toResearch.at(-1), /Sony/);
+  assert.equal(lot.price, 5);
+  assert.equal(lot.research.brand, 'Sony'); // the model's "Sony|null" echo is cleaned
+  // when both heard a price, Muse Voice is trusted over the captions
+  const next = app.lots.nextLot();
+  app.lots.onSpeech({ text: 'twenty pounds', source: 'muse-asr' });
+  app.lots.onSpeech({ text: '£25', source: 'webspeech' });
+  await until(() => next.price !== null);
+  assert.equal(next.price, 20);
+});
+
 test('web research writes the full description; later speech keeps it; the seller’s edits win', async () => {
   let researchCalls = 0;
   const spark = {

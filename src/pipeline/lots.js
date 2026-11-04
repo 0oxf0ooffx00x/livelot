@@ -297,12 +297,21 @@ export function createLotsEngine({ store, bus, clock, cfg, ai, commerce, log, ge
     listingTimers.set(lot.id, setTimeout(() => draftListing(lot).catch((err) => log('error', 'listing failed', err)), delay));
   }
 
+  /** What each listener heard. Muse Voice cuts audio into chunks and can lose a word at the join; captions catch it, and the other way round. */
+  function heard(lot) {
+    const words = (keep) => lot.transcript.filter(keep).map((t) => t.text).join(' ');
+    return { asr: words((t) => t.source === 'muse-asr'), captions: words((t) => t.source !== 'muse-asr') };
+  }
+
   function transcriptText(lot) {
-    const asr = lot.transcript.filter((t) => t.source === 'muse-asr');
-    const live = lot.transcript.filter((t) => t.source !== 'muse-asr');
-    // Muse ASR is the better transcript; fall back to browser captions if it hasn't arrived.
-    const use = asr.length && asr.join(' ').length >= live.join(' ').length * 0.5 ? asr : live.length ? live : asr;
-    return use.map((t) => t.text).join(' ');
+    const { asr, captions } = heard(lot);
+    return asr && captions ? `${asr}\n${captions}` : asr || captions;
+  }
+
+  /** The price the seller said: Muse Voice first, captions if it missed the number. */
+  function spokenPrice(lot) {
+    const { asr, captions } = heard(lot);
+    return parsePrice(asr) ?? parsePrice(captions);
   }
 
   async function draftListing(lot) {
@@ -335,7 +344,7 @@ export function createLotsEngine({ store, bus, clock, cfg, ai, commerce, log, ge
           ms,
         };
         // Guard against an invented price: if the seller said a number, trust the words.
-        const spoken = parsePrice(transcript);
+        const spoken = spokenPrice(lot);
         if (spoken !== null && listing.price !== spoken) listing.price = spoken;
       } catch (err) {
         log('warn', `Spark listing failed, using speech parser: ${err.message}`);
@@ -389,9 +398,10 @@ export function createLotsEngine({ store, bus, clock, cfg, ai, commerce, log, ge
 
   function applyResearch(lot, r, { ms = null, searches = [] } = {}) {
     const conf = Math.max(0, Math.min(1, Number(r.confidence ?? 0.6)));
+    const brand = String(r.brand ?? '').replace(/\|\s*null\s*$/i, '').trim(); // the model can echo the "...|null" from the prompt
     lot.research = {
       product: r.product ? String(r.product).slice(0, 120) : null,
-      brand: r.brand && r.brand !== 'null' ? String(r.brand).slice(0, 60) : null,
+      brand: brand && brand.toLowerCase() !== 'null' ? brand.slice(0, 60) : null,
       title: r.title ? String(r.title).slice(0, 80) : null,
       facts: (Array.isArray(r.facts) ? r.facts : []).map((f) => String(f).slice(0, 120)).filter(Boolean).slice(0, 8),
       sources: (Array.isArray(r.sources) ? r.sources : []).filter((x) => /^https?:\/\//.test(x?.url || '')).map((x) => ({ title: String(x.title || x.url).slice(0, 80), url: String(x.url) })).slice(0, 3),
