@@ -1,6 +1,8 @@
 # LiveLot
 
-**Sell on Facebook and Instagram Live without the spreadsheet.** Hold an item up and say what it is. LiveLot lists it in your WooCommerce store. A viewer comments "sold" and, within a second, gets a private message with a pay link. The last unit can't be sold twice, unpaid holds go to the next person in line, and every buyer's items are bundled into one checkout.
+**Sell on Facebook and leave the listings to Meta's Muse models.** Selling on social media means hours of admin for every item: cropping photos, writing descriptions, creating shop listings, then chasing buyers through comments and private messages. With LiveLot, you show an item to your camera or upload a photo and say the price. The Muse models cut the item out, clean up the photo and write the listing. You check it and publish, and LiveLot posts it to your Facebook Page and adds it to your WooCommerce store. The first person to comment "sold" gets a private message with a pay link. The last unit can't be sold twice, unpaid holds go to the next person in line, and every buyer's items are bundled into one checkout.
+
+Facebook Live and Instagram are built too, but haven't been run on real accounts yet. See [What's been tested](#whats-been-tested).
 
 Built for the **Meta Global AI Developer Hackathon**, Indie Developer track, problem statement **Build for Your World**.
 
@@ -36,26 +38,33 @@ New for the hackathon, all of it:
 | **SAM 3.1** | Finds the item in the frame so it can be cut out of the shot |
 | **Muse Image 1.0** | Turns the cut-out into a clean product photo for the shop and the post |
 | **Muse Voice Transcribe 1.0** | Hears the seller through the mic (price, sizes, condition) in short WAV chunks encoded in the browser |
-| **Graph API** | Facebook `live_comments` (SSE) and Instagram `live_media`; Page and Instagram posts; the Page `feed` webhook; private replies on Messenger and Instagram for the pay link; public replies for the waitlist; Connect (user token → never-expiring Page token) |
+| **Graph API** | Page posts and reading their comments; private replies on Messenger for the pay link; public replies for the waitlist; Connect (user token → never-expiring Page token). Also built, see [What's been tested](#whats-been-tested): Facebook `live_comments` (SSE), Instagram posts, `live_media` and private replies, and the Page `feed` webhook |
 
 ## Run it
 
 ```
 npm install
 npm start                       # http://localhost:3000/dashboard/  (mock mode, no keys needed)
-npm test                        # 47 tests: claim engine, parsers, webhooks, Woo REST shapes, settings, web research
+npm test                        # 55 tests: claim engine, parsers, webhooks, Woo REST shapes, settings, web research
 npm run replay                  # plays a whole scripted show through the real pipeline, prints the outcome
 npm run replay -- --realtime    # same show in real time with the dashboard and overlay (demo fallback)
 npm run smoke                   # one live call per configured service (Meta models, Graph, Woo)
 ```
 
 **Two ways to sell, one engine:**
-- **Live:** go live on Facebook or Instagram. Hold items up to the camera; LiveLot reads the live comments.
-- **Posts:** "comment SOLD" drops. Each lot you publish is posted to your Page and Instagram with its cleaned-up photo and a caption, and "sold" comments on that post claim it. This works for new shops too, since Meta only lets Pages with 100+ followers go live. Create lots from the studio camera or from a phone photo plus a line of text.
+- **Posts (what we run today):** "comment SOLD" drops. Each lot you publish is posted to your Facebook Page with its cleaned-up photo and a caption, and "sold" comments on that post claim it. LiveLot checks the newest post for comments every 5 seconds and older posts every 20 seconds. In our real tests, the private reply went out 7 to 9 seconds after the comment. This works for new shops too, since Meta only lets Pages with 100+ followers go live. Create lots from the camera or from a phone photo plus a line of text.
+- **Live:** go live on Facebook and hold items up to the camera; LiveLot reads the live comments.
 
-Both modes use the same Meta models (Spark, SAM 3.1, Muse Image, and Muse Voice when you speak), the same WooCommerce orders and the same private-reply pay links.
+Both modes use the same Meta models (Spark, SAM 3.1, Muse Image, and Muse Voice when you speak), the same WooCommerce orders and the same private-reply pay links. If the Page has a linked Instagram account, LiveLot posts there and reads its comments as well.
 
-Open **Demo tools → Play the demo show** on the dashboard to watch a full show: four lots, eleven comments, a contested last unit, a size bundle, an expired hold handed to the waitlist, and payments.
+Press **Watch a demo show** on the dashboard to see a full show with pretend buyers, some of them on Instagram: four lots, eleven comments, a contested last unit, a size bundle, an expired hold handed to the waitlist, and payments.
+
+## What's been tested
+
+- **On a real Facebook Page and WooCommerce store:** posts mode. That covers the listing from camera and mic, the Page post, the product in the store, reading a "sold" comment from a personal profile, the order, the private reply with the pay link reaching the buyer's Messenger, and checkout through to Paid. Facebook filed that first message under Message requests → Spam, as the buyer had never messaged the Page.
+- **Payments:** our store uses a **Test payment** method that places the order without taking money. It leaves the order `on-hold` in WooCommerce, which LiveLot counts as paid. Card payments through Stripe haven't been run.
+- **Built, but not yet run on real accounts:** Facebook Live (our Page is under Meta's 100-follower limit) and Instagram (no account is linked to our deployment).
+- **The Page `feed` webhook:** built, but it hasn't delivered a real event to our development-mode app, so our deployment reads comments by polling.
 
 ## What happens during a show
 
@@ -65,8 +74,8 @@ Open **Demo tools → Play the demo show** on the dashboard to watch a full show
 | Say "Levi's trucker, size M, fifteen pounds" | Drafts the listing: title, price, sizes, quantity | **Muse Voice Transcribe**, **Muse Spark 1.3** |
 | | Looks the item up on the web: exact model, specs and a full shop description, with its sources. What you said about condition and price always wins | **Muse Spark 1.3** + **web search** |
 | Press **Enter** | Creates the WooCommerce product (variable product if it has sizes) | |
-| Viewers comment "sold!", "mine", "size 10 please", "I'll take the blue mug" | Reads every comment, decides if it's a claim, which lot and which size | FB **live_comments** SSE, IG **live_media** (posts: Page `feed` webhook plus polling), fast rules → **Muse Spark 1.3** → rules as fallback |
-| | First valid claim holds the stock, adds a line to that buyer's pending order and sends a **private reply** with a Pay button | Messenger + Instagram **private replies** |
+| Viewers comment "sold!", "mine", "size 10 please", "I'll take the blue mug" | Reads every comment, decides if it's a claim, which lot and which size | Polling of Page posts (live shows: FB **live_comments** SSE, IG **live_media**), fast rules → **Muse Spark 1.3** → rules as fallback |
+| | First valid claim holds the stock, adds a line to that buyer's pending order and sends a **private reply** with a Pay button | Messenger **private replies** (Instagram when linked) |
 | | Later claimers get a public reply: "you're #1 on the waitlist" | Graph comment replies |
 | | 15 minutes unpaid: the hold is released and the next in line gets the pay link | |
 | Buyer pays | Dashboard and on-stream overlay turn green; Woo reduces stock | mu-plugin ping, Woo webhook or poll |
@@ -102,7 +111,7 @@ Open **Demo tools → Play the demo show** on the dashboard to watch a full show
 
 ## Platform rules it works within
 
-- **Going live needs 100 followers:** Meta requires a Page with at least 100 followers to go live on Facebook. A new shop can still sell with **Start selling → Comment-sold posts**. LiveLot reads "sold" comments on a Facebook Page post or Instagram post, and everything after that works the same as in a live show.
+- **Going live needs 100 followers:** Meta requires a Page with at least 100 followers to go live on Facebook. A new shop can still sell with **Sell with posts**. LiveLot reads "sold" comments on a Facebook Page post (or an Instagram post, if an account is linked), and everything after that works the same as in a live show.
 
 - **FB and IG private replies:** one private reply per comment, and on Instagram Live only while the broadcast is on. LiveLot saves each comment's private reply for the pay link. Waitlist notices go out as public comment replies, so a promoted buyer can still be sent their link.
 - **Stream lag:** viewers see the stream about 8 s late. A plain "sold" goes to the lot that was on screen 8 s earlier, and comments landing right on a lot change go to the review queue. "lot 3" always wins.
@@ -133,7 +142,7 @@ Or with env vars: copy `.env.example` to `.env`, then:
 
 LiveLot's server has to be **one always-on process**:
 - **Stock:** the stock counter and the order in which comments are committed live in memory. That is what stops double-selling.
-- **Background work:** it holds the Facebook `live_comments` stream open, polls Instagram every 2.5 s, and sweeps expired holds every second.
+- **Background work:** it checks your posts for comments, holds the Facebook `live_comments` stream open during a live show, polls Instagram when an account is linked, and sweeps expired holds every second.
 
 Plain serverless (Vercel Functions included) scales stateless instances on demand, and that breaks both. Run it as a single process that stays up and keep it to **one replica**.
 

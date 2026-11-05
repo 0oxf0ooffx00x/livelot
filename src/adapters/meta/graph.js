@@ -43,5 +43,6 @@ export function createGraph({ version = 'v24.0', fetchImpl = fetch, trace = () =
     base,
     get: (path, opts) => call('GET', path, opts),
     post: (path, opts) => call('POST', path, opts),
+    del: (path, opts) => call('DELETE', path, opts),
   };
 }

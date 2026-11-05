@@ -39,6 +39,8 @@ export function createMockPlatform({ latencyMs = 80 } = {}) {
       return out;
     },
     watchPost() {},
+    unwatchPost() {},
+    async deletePost({ platform, id }) { await wait(); outbox.push({ kind: 'post-deleted', platform, id }); return { ok: true }; },
     async check() { return { mock: true }; },
     state: () => ({}),
   };

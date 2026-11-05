@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { makeApp } from './helpers.js';
 
 const replies = (platform, kind) => platform.outbox.filter((m) => !kind || m.kind === kind);
+const until = async (fn, ms = 3000) => { const t0 = Date.now(); while (!fn()) { if (Date.now() - t0 > ms) throw new Error('timed out'); await new Promise((r) => setTimeout(r, 5)); } };
 
 test('last unit: first "sold" wins, second is waitlisted, no double-sell', async () => {
   const { app, platform, say, lot } = await makeApp();
@@ -23,6 +24,87 @@ test('last unit: first "sold" wins, second is waitlisted, no double-sell', async
   assert.equal(pub.length, 1);
   assert.match(pub[0].text, /#1 on the waitlist/);
   assert.ok(app.store.s.orders.get(a.orderId).paymentUrl);
+});
+
+test('removing a posted item deletes its post and shop product; late comments on it are ignored', async () => {
+  const { app, platform, commerce, say, lot } = await makeApp();
+  await app.endShow();
+  await app.startShow({ platforms: ['facebook'], mode: 'post' });
+  const keep = lot({ title: 'Mug', price: 5 });
+  const gone = lot({ title: 'Scarf', price: 8 });
+  await until(() => gone.wooProductId && gone.posts?.facebook?.id);
+  const postId = gone.posts.facebook.id;
+  const productId = gone.wooProductId;
+  // someone holding it blocks the removal until the hold is undone
+  const held = await say('Alice', 'sold', { lotId: gone.id });
+  assert.equal(held.state, 'invoiced');
+  assert.throws(() => app.lots.cancelLot(gone.id), /holding or has paid/);
+  await app.claims.undo(held.id);
+  await app.claims.idle();
+  assert.equal(app.lots.cancelLot(gone.id).status, 'cancelled');
+  await until(() => platform.outbox.some((m) => m.kind === 'post-deleted'));
+  assert.ok(platform.outbox.some((m) => m.kind === 'post-deleted' && m.id === postId));
+  await until(() => !commerce.products.has(productId));
+  assert.equal(gone.posts.facebook.id, undefined);
+  // a comment still arriving for that post does not fall onto the other item
+  assert.equal(await say('Bob', 'sold', { lotId: gone.id }), null);
+  assert.equal(keep.stock.default, 1);
+  // the other item is untouched
+  assert.equal(keep.status, 'published');
+  assert.ok(commerce.products.has(keep.wooProductId));
+  assert.equal((await say('Cara', 'sold', { lotId: keep.id })).state, 'invoiced');
+});
+
+test('deleting the post on Facebook takes the item off sale, unless someone is holding it', async () => {
+  const { app, platform, commerce, lot, say } = await makeApp();
+  await app.endShow();
+  await app.startShow({ platforms: ['facebook'], mode: 'post' });
+  const a = lot({ title: 'Mug', price: 5 });
+  const b = lot({ title: 'Scarf', price: 8 });
+  await until(() => a.wooProductId && b.wooProductId && a.posts?.facebook?.id && b.posts?.facebook?.id);
+  const productA = a.wooProductId;
+  app.lots.postDeleted(a.id, 'facebook');
+  assert.equal(a.status, 'cancelled');
+  await until(() => !commerce.products.has(productA));
+  assert.ok(!platform.outbox.some((m) => m.kind === 'post-deleted')); // already gone: no second delete
+  // someone holds the other one: it stays listed so their pay link keeps working
+  await say('Alice', 'sold', { lotId: b.id });
+  app.lots.postDeleted(b.id, 'facebook');
+  assert.equal(b.status, 'sold_out');
+  assert.ok(commerce.products.has(b.wooProductId));
+});
+
+test('a price typed by the seller is enough to publish, with no speech at all', async () => {
+  const { app, lot } = await makeApp();
+  const l = lot({ title: 'Mug', price: null }, { publish: false });
+  assert.throws(() => app.lots.publish(l.id), /needs a price/);
+  assert.throws(() => app.lots.override(l.id, { title: 'Changed', price: '' }), /Type a price/);
+  assert.equal(l.title, 'Mug'); // a bad price changes nothing
+  for (const [typed, want] of [['5', 5], ['£5', 5], ['5,50', 5.5], ['£1,250', 1250], ['12.50', 12.5], [8, 8]]) {
+    app.lots.override(l.id, { price: typed });
+    assert.equal(l.price, want, String(typed));
+  }
+  assert.equal(app.lots.publish(l.id).status, 'published');
+  // a live item can't have its price wiped by saving an empty box
+  assert.throws(() => app.lots.override(l.id, { price: '' }), /Type a price/);
+  assert.equal(l.price, 8);
+});
+
+test('a comment from the seller’s own Page or Instagram never takes the item', async () => {
+  const { app, cfg, platform, say, lot } = await makeApp();
+  cfg.meta.pageId = 'my-page';
+  cfg.meta.igUserId = 'my-ig';
+  const l = lot({ title: 'Denim jacket', price: 15 });
+  assert.equal(await say('My-Page', 'sold'), null);
+  assert.equal(await say('My-IG', 'sold', { platform: 'instagram' }), null);
+  assert.equal(l.stock.default, 1);
+  assert.equal(l.status, 'published');
+  assert.equal(replies(platform).length, 0);
+  assert.equal(app.store.s.comments.get('c1').kind, 'own');
+  // the next real buyer still gets it
+  const real = await say('Alice', 'sold');
+  assert.equal(real.state, 'invoiced');
+  assert.equal(l.stock.default, 0);
 });
 
 test('unpaid hold expires and the waitlisted buyer is promoted and gets the link', async () => {

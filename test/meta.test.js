@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createMetaPlatform } from '../src/adapters/meta/index.js';
+import { startFbComments } from '../src/adapters/meta/fbLive.js';
+import { GraphError } from '../src/adapters/meta/graph.js';
 import { loadConfig } from '../src/config.js';
 
 function fakeGraph(now) {
@@ -69,4 +71,22 @@ test('postLot publishes a Page photo post and an Instagram post, retrying while 
   assert.equal(publishTries, 2);
   assert.equal(bodies['/PAGE/photos'].url, 'https://livelot.stream/media/x.jpg');
   assert.equal(bodies['/IG/media'].caption, 'Lot 3: Mug');
+});
+
+test('a post deleted on Facebook is noticed after two "does not exist" answers, not one', async () => {
+  const replies = [
+    new GraphError('gone', { code: 100, subcode: 33 }), // one odd answer...
+    { data: [] }, // ...then fine: still watching
+    new GraphError('rate limit', { code: 4 }), // other errors never count
+    new GraphError('gone', { code: 100, subcode: 33 }),
+    new GraphError('gone', { code: 100, subcode: 33 }),
+  ];
+  let calls = 0;
+  let gone = 0;
+  const graph = { get: async () => { const r = replies[calls++]; if (r instanceof Error) throw r; return r; } };
+  const w = startFbComments({ graph, liveVideoId: 'p1', token: 't', pollMs: 1, onComment: () => {}, onGone: () => { gone++; }, log: () => {}, pollOnly: true });
+  await new Promise((r) => setTimeout(r, 80));
+  w.stop();
+  assert.equal(gone, 1);
+  assert.equal(calls, 5); // and it stopped reading once the post was gone
 });

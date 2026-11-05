@@ -23,6 +23,7 @@ export function createMockCommerce({ publicBaseUrl, latencyMs = 120, currencySym
       return { productId: id, variationIds, permalink: `${publicBaseUrl}/shop/lot/${lot.lotNumber}` };
     },
     async updateProduct() { await wait(); },
+    async removeProduct(lot) { await wait(); products.delete(lot.wooProductId); },
     async createOrder({ buyer, lines }) {
       await wait();
       const id = ++oid;

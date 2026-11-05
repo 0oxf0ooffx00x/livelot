@@ -13,7 +13,7 @@ const STATE_ART = {
   paid: 'paid', waitlisted: 'state-waitlist', expired: 'state-expired', cancelled: 'state-expired',
 };
 const LOT_LABEL = { detecting: 'Looking', draft: 'Draft', published: 'On sale', sold_out: 'Sold out', cancelled: 'Removed' };
-const MODEL_NAMES = { 'rules (fast path)': 'Instant rule', 'muse-spark-1.3': 'Muse Spark 1.3', 'sam-3.1': 'SAM 3.1', 'sam-3-1': 'SAM 3.1', 'muse-voice-transcribe-1.0': 'Muse Voice', 'muse-image-1.0': 'Muse Image', regex: 'Rules', heuristic: 'Speech parser', scripted: 'Script', test: 'Test', woocommerce: 'WooCommerce', 'graph-api': 'Facebook / Instagram' };
+const MODEL_NAMES = { 'rules (fast path)': 'Instant rule', 'muse-spark-1.3': 'Muse Spark 1.3', 'sam-3.1': 'SAM 3.1', 'sam-3-1': 'SAM 3.1', 'muse-voice-transcribe-1.0': 'Muse Voice', 'muse-image-1.0': 'Muse Image', regex: 'Rules', heuristic: 'Speech parser', scripted: 'Script', test: 'Test', woocommerce: 'WooCommerce', 'graph-api': 'Facebook' };
 const MODEL_ART = { 'rules (fast path)': 'ai-rule', regex: 'ai-rule', 'sam-3.1': 'ai-sam', 'sam-3-1': 'ai-sam', 'muse-voice-transcribe-1.0': 'ai-voice', 'muse-image-1.0': 'ai-image', heuristic: 'ai-write', scripted: 'home-demo', test: 'tester', woocommerce: 'setup-shop', 'graph-api': 'setup-meta' };
 const modelName = (m) => MODEL_NAMES[m] || (m?.includes('spark-open') ? 'Muse Spark Open' : m || '');
 const modelArt = (m) => MODEL_ART[m] || (m?.includes('spark') ? 'ai-spark' : m?.includes('sam') ? 'ai-sam' : 'ai-spark');
@@ -94,7 +94,7 @@ function renderTop() {
   tester.hidden = !(dev && live);
   const realComments = S.platform?.kind === 'meta' && !show?.demo;
   $('#testerNote').textContent = realComments
-    ? 'Type a comment as if you were a buyer. Real Facebook and Instagram comments show up on their own.'
+    ? 'Type a comment as if you were a buyer. Real Facebook comments show up on their own.'
     : 'Facebook isn’t connected yet, so pretend to be a buyer here.';
   if (!realComments && !tester.dataset.touched) tester.open = true;
 }
@@ -134,7 +134,7 @@ function renderStart() {
   $('#setup').innerHTML = [
     row('setup-shop', 'Your shop', woo, woo ? 'Connected' : 'Practice shop',
       woo ? `Products and orders go to ${esc(S.config.shopName || 'your shop')} on WooCommerce.` : 'Orders stay inside LiveLot until you add your WooCommerce store.', 'shop'),
-    row('setup-meta', 'Facebook and Instagram', meta, meta ? 'Connected' : 'Not connected yet',
+    row('setup-meta', 'Facebook', meta, meta ? 'Connected' : 'Not connected yet',
       meta ? `Posts go to ${S.config.pageName ? `the Page “${esc(S.config.pageName)}”` : 'your Page'}. Comments and private replies are real.` : 'You can still try everything: pretend to be a buyer on the selling screen.', 'meta'),
     row('ai-spark', 'Meta AI', ai.length > 0, ai.length ? `${ai.length} models ready` : 'Not set up',
       ai.length ? ai.map(modelName).join(', ') : 'Built-in rules stand in until a Meta Model API key is added.', 'ai'),
@@ -280,7 +280,13 @@ function renderLot() {
     return;
   }
   lastFormKey = formKey;
+  // A redraw (the web search finishing, say) must not wipe what the seller typed.
+  const old = panel.querySelector('.lot-form');
+  const typed = old?.dataset.lot === lot.id ? [...old.querySelectorAll('input[name], textarea[name]')].filter((i) => i.value !== i.defaultValue) : [];
   panel.innerHTML = `<div class="lot-visual">${top}</div>${lotFormHtml(lot)}`;
+  const form = panel.querySelector('.lot-form');
+  for (const i of typed) if (form.elements[i.name]) form.elements[i.name].value = i.value;
+  if (typed.length) syncPublish(form);
 }
 
 function lotTopHtml(lot) {
@@ -340,6 +346,24 @@ function sizesText(lot) {
   return lot.variants.map((v) => ((lot.initialStock?.[v.key] ?? 1) > 1 ? `${v.label}×${lot.initialStock[v.key]}` : v.label)).join(', ');
 }
 
+// What's in the price box: "5", "£5", "5,50" and "1,250" all count.
+const typedPrice = (v) => {
+  const n = Number(String(v ?? '').replace(/[^\d.,]/g, '').replace(/,(\d{3})\b/, '$1').replace(',', '.'));
+  return n > 0 ? n : 0;
+};
+const publishText = (price) => `${S.show?.mode === 'post' ? 'Publish and post' : 'Publish'} ${price ? money(sym(), price) : ''}<small>${price ? 'or press Enter' : 'Add a price first'}</small>`;
+/** The Publish button follows the price box, so a typed price is enough. */
+function syncPublish(form) {
+  const b = form?.publish;
+  if (!b || !form.price) return;
+  const price = typedPrice(form.price.value);
+  b.disabled = !price;
+  b.querySelector('span:last-child').innerHTML = publishText(price);
+}
+document.addEventListener('input', (e) => {
+  if (e.target.classList?.contains('price-input')) syncPublish(e.target.closest('.lot-form'));
+});
+
 function lotFormHtml(lot) {
   const live = lot.status === 'published' || lot.status === 'sold_out';
   const said = (lot.transcript || []).map((t) => t.text).join(' ');
@@ -353,8 +377,7 @@ function lotFormHtml(lot) {
     return `<span class="${left === 0 ? 'gone' : ''}">${esc(label)} ${left}<small>left${held ? `, ${held} held` : ''}${paid ? `, ${paid} paid` : ''}</small></span>`;
   }).join('');
   const qty = lot.variants.length === 1 && lot.variants[0].key === 'default' ? (lot.initialStock?.default ?? 1) : '';
-  const posts = S.show?.mode === 'post';
-  const miss = !live && lot.visionMiss
+  const miss =!live && lot.visionMiss
     ? `<div class="miss">${art('vision-miss')}<p>${lot.concept && lot.concept !== 'product' ? `Couldn’t spot the ${esc(lot.concept)} in the picture.` : lot.fromPhoto ? 'Couldn’t find the item in your photo.' : 'Nothing was held up to the camera.'} ${lot.fromPhoto ? 'Type the title and price below, or upload a closer photo.' : 'Hold it up inside the box and look again, or upload a photo.'}</p>
         ${lot.fromPhoto ? '' : `<button type="button" class="bb small" data-act="look">${art('btn-look')}<span>Look again</span></button>`}</div>`
     : '';
@@ -373,8 +396,9 @@ function lotFormHtml(lot) {
     ${lot.publishError ? `<p class="err">The shop said: ${esc(lot.publishError)}. Publishing again will retry.</p>` : ''}
     ${postsHtml(lot)}
     <div class="form-actions${live ? '' : ' sticky'}">
-      ${live ? `<button type="submit" class="bb wide" name="save">${art('step-publish')}<span>Save changes</span></button>`
-        : `<button type="submit" class="bb go wide" name="publish" ${lot.price ? '' : 'disabled'}>${art('step-publish')}<span>${posts ? 'Publish and post' : 'Publish'} ${lot.price ? money(sym(), lot.price) : ''}<small>${lot.price ? 'or press Enter' : 'Add a price first'}</small></span></button>
+      ${live ? `<button type="submit" class="bb wide" name="save">${art('step-publish')}<span>Save changes</span></button>
+           <div class="more"><button type="button" class="bb small danger" data-act="cancel-lot">${art('btn-remove')}<span>Remove</span></button></div>`
+        : `<button type="submit" class="bb go wide" name="publish" ${lot.price ? '' : 'disabled'}>${art('step-publish')}<span>${publishText(lot.price)}</span></button>
            <div class="more">
              ${lot.fromPhoto ? '' : `<button type="button" class="bb small" data-act="look" title="Look at the camera again for this item">${art('btn-look')}<span>Look again</span></button>`}
              <button type="button" class="bb small danger" data-act="cancel-lot">${art('btn-remove')}<span>Remove</span></button>
@@ -398,7 +422,7 @@ function descriptionHtml(lot) {
 function postsHtml(lot) {
   const p = lot.posts;
   if (!p) return '';
-  if (p.pending) return '<p class="hint posts">Posting to your Page and Instagram…</p>';
+  if (p.pending) return '<p class="hint posts">Posting to your Facebook Page…</p>';
   if (p.error) return `<p class="err">Posting failed: ${esc(p.error)}</p>`;
   const item = (name, v) => (v?.id ? (v.url ? `<a href="${esc(v.url)}" target="_blank" rel="noopener">See the ${name} post</a>` : `<span>${name} post</span>`) : v?.error ? `<span class="err">${name}: ${esc(v.error)}</span>` : '');
   return `<p class="posts">${[item('Facebook', p.facebook), item('Instagram', p.instagram)].filter(Boolean).join(' ')}</p>`;
@@ -473,7 +497,7 @@ function renderFeed() {
   const wants = S.stats.claims || 0;
   $('#feedHint').textContent = comments.length ? `${comments.length} comment${comments.length === 1 ? '' : 's'}, ${wants} wanting to buy` : 'Muse Spark reads every one and spots the buyers';
   if (!comments.length) {
-    $('#feed').innerHTML = `<li class="feed-empty">${art('empty-comments', 'xl')}<span>Comments from Facebook and Instagram show up here, with what LiveLot did about each one.</span></li>`;
+    $('#feed').innerHTML = `<li class="feed-empty">${art('empty-comments', 'xl')}<span>Comments from Facebook show up here, with what LiveLot did about each one.</span></li>`;
     return;
   }
   $('#feed').innerHTML = comments.map((c) => {
@@ -495,6 +519,11 @@ function renderFeed() {
       why = claim.error ? `<span class="err">${esc(claim.error)}</span>` : claim.replyError ? `<span class="err">Reply failed: ${esc(claim.replyError)}</span>` : esc(claim.reason || claim.match?.reason || '');
     } else if (c.kind === 'chatter') {
       out = `<span class="src">not a buyer</span>`;
+    } else if (c.kind === 'own') {
+      out = `<span class="src">your own account</span>`;
+      why = 'LiveLot doesn’t sell to your own Page. To test a sale, comment from a personal profile.';
+    } else if (c.kind === 'removed') {
+      out = `<span class="src">item removed</span>`;
     } else if (c.kind === 'pending') {
       out = `<span class="src">reading…</span>`;
     }
@@ -588,6 +617,8 @@ function renderTrace() {
   el.innerHTML = t.length ? t.slice(-60).reverse().map((x) => `<li class="tr ${x.ok ? '' : 'fail'}">${art(modelArt(x.model))}<span class="what" title="${esc(x.summary || '')}"><span class="model">${esc(modelName(x.model))}</span> ${esc(x.purpose || '')}${x.summary ? `: ${esc(x.summary)}` : ''}</span><span class="ms">${x.ms ?? ''} ms</span></li>`).join('')
     : `<li class="trace-empty">${models.length ? `Connected: ${models.join(', ')}. Calls show up here as they happen.` : 'Running without a Meta Model API key, so the built-in rules and speech parser stand in. Add MODEL_API_KEY to use Muse Spark, SAM 3.1, Muse Voice and Muse Image.'}</li>`;
 }
+// On a phone the camera comes first, so the panel starts folded.
+if (window.matchMedia('(max-width: 760px)').matches) $('#behind').open = false;
 $('#behind').addEventListener('toggle', renderTrace);
 
 // ------------------------------------------------------------- actions
@@ -674,7 +705,15 @@ document.addEventListener('click', async (e) => {
         toast('Writing the listing…');
         break;
       }
-      case 'cancel-lot': await api(`/api/lot/${b.closest('form').dataset.lot}/cancel`); selectedLotId = null; break;
+      case 'cancel-lot': {
+        const lot = S.lots.get(b.closest('form').dataset.lot);
+        const onSale = ['published', 'sold_out'].includes(lot?.status);
+        if (onSale && !window.confirm(`Take Lot ${lot.lotNumber} off sale? This deletes its Facebook post and takes it out of your shop.`)) return;
+        await api(`/api/lot/${lot.id}/cancel`);
+        selectedLotId = null;
+        if (onSale) toast(`Lot ${lot.lotNumber} removed`);
+        break;
+      }
       case 'research': await api(`/api/lot/${b.closest('form').dataset.lot}/research`); lastFormKey = ''; toast('Looking it up online…'); break;
       default: return;
     }

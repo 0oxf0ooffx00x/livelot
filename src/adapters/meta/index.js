@@ -150,7 +150,7 @@ export function createMetaPlatform({ cfg, trace, log, fetchImpl = fetch }) {
   }
 
   /** Read comments on a lot's own post. Webhooks deliver FB comments instantly; this poll is the backstop. */
-  function watchPost({ platform: p, id, lotId, since }) {
+  function watchPost({ platform: p, id, lotId, since, onGone = null }) {
     const key = `${p}:${id}`;
     if (watchers.has(key) || !onCommentRef) return;
     newestWatch = lotId;
@@ -162,8 +162,23 @@ export function createMetaPlatform({ cfg, trace, log, fetchImpl = fetch }) {
     };
     const w = p === 'instagram'
       ? startIgMediaPoll({ graph, mediaId: id, token: m.igToken, pollMs: interval, onComment: tag, log })
-      : startFbComments({ graph, liveVideoId: id, token: m.pageToken, pollMs: interval, onComment: tag, log, fetchImpl, pollOnly: true });
+      : startFbComments({ graph, liveVideoId: id, token: m.pageToken, pollMs: interval, onComment: tag, log, fetchImpl, pollOnly: true, onGone: () => { unwatchPost({ platform: p, id }); onGone?.(); } });
+    w.lotId = lotId;
     watchers.set(key, w);
+  }
+
+  function unwatchPost({ platform: p, id }) {
+    const key = `${p}:${id}`;
+    watchers.get(key)?.stop();
+    watchers.delete(key);
+    newestWatch = [...watchers.values()].at(-1)?.lotId ?? null; // the next newest post gets the quick checks
+  }
+
+  /** Delete a lot's post. The Instagram API has no delete, so that one is left for the seller. */
+  async function deletePost({ platform: p, id }) {
+    if (p !== 'facebook') return { ok: false, note: 'delete it in the Instagram app' };
+    await graph.del(`/${id}`, { token: m.pageToken, purpose: 'delete the post from the Page' });
+    return { ok: true };
   }
 
   function buttonMessage(text, url, title) {
@@ -239,5 +254,5 @@ export function createMetaPlatform({ cfg, trace, log, fetchImpl = fetch }) {
     return out;
   }
 
-  return { kind: 'meta', start, stop, privateReply, publicReply, sendMessage, postLot, watchPost, check, state: () => ({ ...state, fbMode: fb?.mode?.() || null, watching: watchers.size }) };
+  return { kind: 'meta', start, stop, privateReply, publicReply, sendMessage, postLot, watchPost, unwatchPost, deletePost, check, state: () => ({ ...state, fbMode: fb?.mode?.() || null, watching: watchers.size }) };
 }

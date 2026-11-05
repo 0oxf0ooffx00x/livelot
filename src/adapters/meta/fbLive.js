@@ -47,8 +47,9 @@ export async function* sseEvents(body) {
   }
 }
 
-export function startFbComments({ graph, liveVideoId, token, rate = 'ten_per_second', pollMs = 2000, onComment, log, fetchImpl = fetch, pollOnly = false }) {
+export function startFbComments({ graph, liveVideoId, token, rate = 'ten_per_second', pollMs = 2000, onComment, onGone = null, log, fetchImpl = fetch, pollOnly = false }) {
   let stopped = false;
+  let missing = 0;
   // Ordinary Page posts have no live_comments stream: poll their comments edge instead.
   let mode = pollOnly ? 'poll' : 'stream';
   const seen = new Set();
@@ -99,9 +100,17 @@ export function startFbComments({ graph, liveVideoId, token, rate = 'ten_per_sec
         params: { order: 'reverse_chronological', filter: 'stream', live_filter: 'no_filter', fields: 'id,message,from{id,name},created_time', limit: '50' },
       });
       for (const c of (r.data || []).reverse()) emit(c);
+      missing = 0;
     } catch (err) {
+      // Graph's answer for a deleted post (#100/33). Twice in a row, so one odd reply can't take an item off sale.
+      if (onGone && err.code === 100 && err.subcode === 33 && ++missing >= 2) {
+        stopped = true;
+        onGone();
+        return;
+      }
       log('warn', `FB comment poll failed: ${err.message}`);
     }
+    if (stopped) return;
     pollTimer = setTimeout(poll, typeof pollMs === 'function' ? pollMs() : pollMs);
   }
 

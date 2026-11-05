@@ -25,19 +25,40 @@
 
   <!-- Before selling: pick how -->
   <section id="start" class="start" aria-labelledby="startTitle">
-    <h1 id="startTitle">How are you selling today?</h1>
+    <div class="intro">
+      <h1 id="startTitle">Sell on Facebook.<br />Leave the listings to Meta’s Muse models.</h1>
+      <p class="intro-lead">Selling on social media means hours of admin for every item: cropping photos, writing descriptions, creating shop listings, then chasing buyers through comments and private messages. LiveLot automates that work. Show an item to your camera or upload a photo, check the listing, and publish.</p>
+      <ul class="intro-points">
+        <li>
+          <span class="art l" style="--art:url(/art/ai-sam.webp)" aria-hidden="true"></span>
+          <b>No more cropping photos</b>
+          <span>SAM 3.1 cuts the item out of the picture and Muse Image turns it into a clean product shot.</span>
+        </li>
+        <li>
+          <span class="art l" style="--art:url(/art/ai-write.webp)" aria-hidden="true"></span>
+          <b>No more writing listings</b>
+          <span>Muse Spark identifies the product, checks the details with a web search and writes the title and description. Muse Voice picks up the price you say.</span>
+        </li>
+        <li>
+          <span class="art l" style="--art:url(/art/step-sold.webp)" aria-hidden="true"></span>
+          <b>No more chasing buyers</b>
+          <span>LiveLot posts the item and adds it to your shop. The first person to comment <em>sold</em> gets a pay link by private message, and the item is held so it can’t be sold twice.</span>
+        </li>
+      </ul>
+    </div>
+    <h2 class="start-q">How are you selling today?</h2>
     <div class="ways">
       <button class="way big recommended" data-act="start-posts">
         <span class="art xxl" style="--art:url(/art/home-posts.webp)" aria-hidden="true"></span>
         <span class="way-badge">Works today</span>
         <span class="way-title">Sell with posts</span>
-        <span class="way-text">Add an item and LiveLot posts it to your Facebook Page and Instagram. The first person to comment <b>sold</b> gets a pay link by private message.</span>
+        <span class="way-text">Add an item and LiveLot posts it to your Facebook Page. The first person to comment <b>sold</b> gets a pay link by private message.</span>
         <span class="way-go">Start selling with posts</span>
       </button>
       <button class="way big" data-act="start">
         <span class="art xxl" style="--art:url(/art/home-live.webp)" aria-hidden="true"></span>
         <span class="way-title">Go live</span>
-        <span class="way-text">Stream on Facebook or Instagram Live and hold items up. Viewers comment <b>sold</b> and get their pay link in seconds.</span>
+        <span class="way-text">Stream on Facebook Live and hold items up. Viewers comment <b>sold</b> and get their pay link in seconds.</span>
         <span class="way-fine">Facebook only lets Pages with 100+ followers go live.</span>
         <span class="way-go">Start a live show</span>
       </button>
@@ -71,8 +92,18 @@
     </section>
   </section>
 
-  <!-- While selling: what to do now -->
-  <section id="now" class="now" aria-live="polite"></section>
+  <!-- While selling: what to do now, and what the Meta models are doing -->
+  <div class="top-band">
+    <section id="now" class="now" aria-live="polite"></section>
+    <details class="card fold behind" id="behind" open>
+      <summary><span class="art l" style="--art:url(/art/ai-spark.webp)" aria-hidden="true"></span><span class="fold-title">Behind the scenes<small id="behindHint">Every Meta AI call, as it happens</small></span></summary>
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-tab="trace">Meta AI calls</button>
+        <button role="tab" aria-selected="false" data-tab="log">Log</button>
+      </div>
+      <ol id="trace" class="trace"></ol>
+    </details>
+  </div>
 
   <main class="work" id="work">
     <section class="card item-card" aria-labelledby="itemHeading">
@@ -148,14 +179,6 @@
       <header class="card-head"><h2 id="itemsHeading">Your items</h2><span class="hint">Click one to see it</span></header>
       <ol id="rail" class="rail"></ol>
     </section>
-    <details class="card fold behind" id="behind">
-      <summary><span class="art l" style="--art:url(/art/ai-spark.webp)" aria-hidden="true"></span><span class="fold-title">Behind the scenes<small id="behindHint">Every Meta AI call, as it happens</small></span></summary>
-      <div class="tabs" role="tablist">
-        <button role="tab" aria-selected="true" data-tab="trace">Meta AI calls</button>
-        <button role="tab" aria-selected="false" data-tab="log">Log</button>
-      </div>
-      <ol id="trace" class="trace"></ol>
-    </details>
   </section>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

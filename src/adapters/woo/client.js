@@ -101,6 +101,12 @@ export function createWooClient(cfg, { fetchImpl = fetch, trace = () => {} } = {
     }, `update product "${lot.title}"`);
   }
 
+  /** Out of the shop: Woo moves it to the bin, where it can still be restored. */
+  async function removeProduct(lot) {
+    if (!lot.wooProductId) return;
+    await call('DELETE', `/products/${lot.wooProductId}`, null, `remove product "${lot.title}"`);
+  }
+
   const lineItem = (l) => ({
     product_id: l.productId,
     ...(l.variationId ? { variation_id: l.variationId } : {}),
@@ -161,7 +167,7 @@ export function createWooClient(cfg, { fetchImpl = fetch, trace = () => {} } = {
     return { ok: true, wc: r?.environment?.version };
   }
 
-  return { kind: 'woo', createProduct, updateProduct, createOrder, addLines, removeLines, cancelOrder, orderStatuses, ping };
+  return { kind: 'woo', createProduct, updateProduct, removeProduct, createOrder, addLines, removeLines, cancelOrder, orderStatuses, ping };
 }
 
 const escHtml = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);

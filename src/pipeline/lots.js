@@ -458,13 +458,21 @@ export function createLotsEngine({ store, bus, clock, cfg, ai, commerce, log, ge
     emit(lot);
   }
 
+  /** A price the seller typed: "5", "£5", "5,50" and "1,250" all work. */
+  function typedPrice(v) {
+    const n = Number(String(v ?? '').replace(/[^\d.,]/g, '').replace(/,(\d{3})\b/, '$1').replace(',', '.'));
+    if (!(n > 0)) throw new Error('Type a price above 0, like 5 or 12.50');
+    return n;
+  }
+
   function override(lotId, fields) {
     const lot = S.lots.get(lotId);
     if (!lot) throw new Error('no such lot');
+    const price = fields.price === undefined ? undefined : typedPrice(fields.price); // checked first: a bad price changes nothing
     const editable = ['title', 'description', 'price'];
     for (const k of editable) {
       if (fields[k] === undefined) continue;
-      const v = k === 'price' ? Number(fields[k]) : String(fields[k]);
+      const v = k === 'price' ? price : String(fields[k]);
       if (k === 'title' && v !== lot.title) lot.titleSource = 'seller';
       if (k === 'description' && v !== lot.description) lot.descriptionSource = 'seller';
       lot[k] = v;
@@ -547,7 +555,7 @@ export function createLotsEngine({ store, bus, clock, cfg, ai, commerce, log, ge
       const r = await platform.postLot(lot, { imageUrl: img, caption: lotCaption({ lot, sym: cfg.currencySymbol }), platforms: S.show.platforms });
       lot.posts = r;
       for (const [p, post] of Object.entries(r)) {
-        if (post?.id) platform.watchPost?.({ platform: p, id: post.id, lotId: lot.id, since: lot.publishedAt });
+        if (post?.id) platform.watchPost?.({ platform: p, id: post.id, lotId: lot.id, since: lot.publishedAt, onGone: () => postDeleted(lot.id, p) });
         if (post?.error) log('warn', `Lot ${lot.lotNumber}: posting to ${p} failed: ${post.error}`);
       }
       log('info', `Lot ${lot.lotNumber} posted: ${Object.entries(r).filter(([, v]) => v?.id).map(([p]) => p).join(' + ') || 'nowhere'}`);
@@ -556,16 +564,63 @@ export function createLotsEngine({ store, bus, clock, cfg, ai, commerce, log, ge
       log('error', `Lot ${lot.lotNumber}: posting failed`, err);
     }
     emit(lot);
+    if (lot.status === 'cancelled') removePosts(lot); // removed while the post was still going up
   }
+
+  const hasBuyer = (lot) => store.claimsForLot(lot.id).some((c) => ['reserved', 'invoiced', 'paid'].includes(c.state));
 
   function cancelLot(lotId) {
     const lot = S.lots.get(lotId);
     if (!lot) throw new Error('no such lot');
-    const live = store.claimsForLot(lot.id).some((c) => ['reserved', 'invoiced', 'paid'].includes(c.state));
-    if (live) throw new Error('lot has claims; undo them first');
+    if (hasBuyer(lot)) throw new Error('Someone is holding or has paid for this item, so it can’t be removed. If it’s a hold, press Undo next to their comment first.');
+    const wasOnSale = lot.status === 'published' || lot.status === 'sold_out';
     lot.status = 'cancelled';
     emit(lot);
+    if (wasOnSale) {
+      removePosts(lot);
+      removeFromShop(lot);
+      log('info', `Lot ${lot.lotNumber} removed`);
+    }
     return lot;
+  }
+
+  /** Stop reading the item's posts and delete them. */
+  async function removePosts(lot) {
+    for (const [p, post] of Object.entries(lot.posts || {})) {
+      if (!post?.id) continue;
+      platform?.unwatchPost?.({ platform: p, id: post.id });
+      try {
+        const r = await platform?.deletePost?.({ platform: p, id: post.id });
+        if (r?.note) log('warn', `Lot ${lot.lotNumber}: ${p} post not deleted: ${r.note}`);
+        else lot.posts[p] = { deleted: true };
+      } catch (err) {
+        log('warn', `Lot ${lot.lotNumber}: couldn’t delete the ${p} post, so delete it on ${p}: ${err.message}`);
+      }
+    }
+    emit(lot);
+  }
+
+  async function removeFromShop(lot) {
+    await productJobs.get(lot.id)?.catch(() => {}); // the product may still be being created
+    if (!lot.wooProductId) return;
+    await commerce.removeProduct?.(lot).catch((err) => log('warn', `Lot ${lot.lotNumber}: couldn’t take it out of the shop: ${err.message}`));
+  }
+
+  /** The seller deleted the post on Facebook: with no other post and no buyer, the item comes off sale too. */
+  function postDeleted(lotId, p) {
+    const lot = S.lots.get(lotId);
+    if (!lot || lot.status === 'cancelled') return;
+    if (lot.posts?.[p]) lot.posts[p] = { deleted: true };
+    if (Object.values(lot.posts || {}).some((post) => post?.id)) {
+      log('info', `Lot ${lot.lotNumber}: its ${p} post was deleted; its other post stays on sale`);
+    } else if (hasBuyer(lot)) {
+      log('warn', `Lot ${lot.lotNumber}: its ${p} post was deleted, but someone is holding or has paid for it, so it stays listed`);
+    } else {
+      lot.status = 'cancelled';
+      removeFromShop(lot);
+      log('info', `Lot ${lot.lotNumber}: its ${p} post was deleted, so it’s off sale`);
+    }
+    emit(lot);
   }
 
   async function relist(lotId) {
@@ -578,5 +633,5 @@ export function createLotsEngine({ store, bus, clock, cfg, ai, commerce, log, ge
 
   const visionIdle = () => Promise.allSettled([...visionJobs.values()]);
 
-  return { nextLot, onFrame, onSpeech, onAudio, publish, override, ensureProduct, cancelLot, relist, draftListing, currentLot, visionIdle, postLot, lookAgain, researchAgain, frames: () => frames.length };
+  return { nextLot, onFrame, onSpeech, onAudio, publish, override, ensureProduct, cancelLot, postDeleted, relist, draftListing, currentLot, visionIdle, postLot, lookAgain, researchAgain, frames: () => frames.length };
 }

@@ -54,6 +54,22 @@ export function createClaimsEngine({ store, bus, clock, cfg, platform, commerce,
     S.comments.set(rec.id, rec);
     bus.emit('comment.received', rec);
 
+    // The seller's own account is never a buyer: this also covers LiveLot's own public replies,
+    // and Facebook refuses to let a Page message itself, so a claim here could never be paid.
+    const ownId = rec.platform === 'instagram' ? cfg.meta?.igUserId : cfg.meta?.pageId;
+    if (ownId && String(rec.from?.id) === String(ownId)) {
+      rec.kind = 'own';
+      bus.emit('comment.updated', rec);
+      log('info', `comment from your own account ignored: ${rec.text}`);
+      return Promise.resolve(null);
+    }
+    // A late comment on a removed item's post must not land on whatever is on sale now.
+    if (rec.lotId && S.lots.get(rec.lotId)?.status === 'cancelled') {
+      rec.kind = 'removed';
+      bus.emit('comment.updated', rec);
+      return Promise.resolve(null);
+    }
+
     const analysis = analyse(rec).catch((err) => {
       log('error', `analyse failed for "${rec.text}"`, err);
       return null;
